@@ -5,23 +5,23 @@ import json
 import os
 import sqlite3
 import time
-
-progPath = os.path.dirname(os.path.abspath(__file__))
-dataBase = sqlite3.connect(progPath + '/db.s3db')
-curr = dataBase.cursor()
+import hashlib
 
 progPath = os.path.dirname(os.path.abspath(__file__))
 
-#grabsbalance and unlocks supports is balance is insuficient
+#grabs balance and unlocks supports is balance is insuficient
 def checkBal() -> str:
+    print('--waiting to check balance--')
+    time.sleep(90)
     wallet = requests.post("http://localhost:5279", json={"method": "wallet_balance", "params": {"wallet_id": "nsfw"}}).json()
     walletBal = float(wallet['result']['available'])
 
-    if(walletBal >= 1):
+    if(walletBal <= 1):
+        print('--unlocking funds--')
         supports = requests.post("http://localhost:5279", json={"method": "support_list", "params": {"wallet_id": "nsfw", "page_size": 50}}).json()
         print(supports)
         for a in supports["result"]["items"]:
-            request.post("http://localhost:5279", json={"method": "support_abandon", "params": {"wallet_id": "nsfw", "txid": a['txid']}}).json()
+            requests.post("http://localhost:5279", json={"method": "support_abandon", "params": {"claim_id": a['claim_id'], "wallet_id": "nsfw"}}).json()
         checkBal()
     else:
         return(walletBal)
@@ -60,31 +60,47 @@ def imgurUploader(image) -> str:
 
 #creates animated thumbnail off video
 def thumbnailCreator(video) -> str:
-     os.system(f"""ffmpeg -i "{video}" -fs 3M -vf "scale=640:-2" -y {progPath + "/temp/thumbnailTemp.gif"}""")
+     os.system(f"""ffmpeg -i "{video}" -fs 3M -vf "scale=640:-2" -y "{progPath + '/temp/thumbnailTemp.gif'}" """)
      print(progPath + "/temp/thumbnailTemp.gif")
      return(progPath + "/temp/thumbnailTemp.gif")
 
 #uploads video to lbry
 def uploadToLBRY(channels, channel, file) -> str:
     channelInfo = channels[channel]
-    filePath = channelInfo['content_folder'] + '/' + file
-    thumbnail = imgurUploader(thumbnailCreator(filePath))
-    upload = requests.post("http://localhost:5279", json={"method": "publish", "params": {"name": os.path.splitext(os.path.basename(file))[0].replace(' ', ''), 
-                                "bid": channelInfo['upload_fee'], "file_path": filePath, "title": file, "tags": channelInfo['content_tags'], 
-                                "thumbnail_url": thumbnail, "channel_id": channelInfo['channel_id'],
-                                "account_id": "bQnAHW3yQAMKrzMUrzevb6zPFDtHABhmXr", "wallet_id": "nsfw", "funding_account_ids": ["bQnAHW3yQAMKrzMUrzevb6zPFDtHABhmXr"]}}).json()
+    thumbnail = imgurUploader(thumbnailCreator(file))
+    upload = requests.post("http://localhost:5279", json={"method": "publish", "params": {
+                                "name": str(hashlib.sha256(os.path.splitext(file)[0].encode('utf-8').strip()).hexdigest())[:5] + str(os.path.splitext(os.path.basename(file))[0].replace(' ', '')), 
+                                "bid": channelInfo['upload_fee'], "file_path": file, "title": os.path.splitext(os.path.basename(file))[0], "tags": channelInfo['content_tags'], 
+                                "thumbnail_url": thumbnail, "channel_id": channelInfo['channel_id'], "account_id": "bQnAHW3yQAMKrzMUrzevb6zPFDtHABhmXr", "wallet_id": "nsfw", 
+                                "funding_account_ids": ["bQnAHW3yQAMKrzMUrzevb6zPFDtHABhmXr", "bPqPneKocvBHye5aRGZE1E2qjKExjKKtYX"]}}).json()
+    #print(upload)
     print(upload)
-    insertNewUpload(channel, file, (upload["result"]["outputs"][0]["permanent_url"]))
-    return(upload['result']['outputs'][0]['permanent_url'])
+    if 'error' in upload.keys():
+        checkBal()
+        return(upload['error']['data']['message'])
+    else:
+        insertNewUpload(channel, file, (upload["result"]["outputs"][0]["permanent_url"]))
+        return(upload['result']['outputs'][0]['permanent_url'])
 
 if __name__ == "__main__":
-    channels = getChannelList()
-    for a in channels:
-        print(a)
-        fileList = (os.listdir(channels[a]['content_folder']))
-        notUploaded = getNotUploaded(a, fileList)
-        print(notUploaded)
-        for c in notUploaded[0:1]:
-            url = uploadToLBRY(channels, a, c)
-            print(url)
-    dataBase.close()
+    global dataBase, curr
+    while True:
+        dataBase = sqlite3.connect(progPath + '/db.s3db')
+        curr = dataBase.cursor()
+        channels = getChannelList()
+        for a in channels:
+            print(a)
+            #allows for content to be spread across different folders
+            fileList = []
+            for d in (0, len(channels[a]['content_folder'])-1):
+                fileList.extend([channels[a]['content_folder'][d] + '/' + b for b in os.listdir(channels[a]['content_folder'][d]) if not '!qB' in b])
+            notUploaded = getNotUploaded(a, fileList)
+            print(notUploaded)
+            for c in notUploaded[0:1]:
+                url = uploadToLBRY(channels, a, c)
+                print(url)
+            print("--Sleeping--")
+            time.sleep(30) if not len(notUploaded) == 0 else time.sleep(1)
+        dataBase.close()
+        print("--Finnished Set, Sleeping--")
+        time.sleep(30)
