@@ -13,4 +13,3 @@ response = requests.post("http://localhost:5279", json={"method": "channel_creat
         "funding_account_ids": ["bQnAHW3yQAMKrzMUrzevb6zPFDtHABhmXr"], "preview": False, "blocking": False}}).json()
 print(response)
 input()
-

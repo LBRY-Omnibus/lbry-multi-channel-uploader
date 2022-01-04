@@ -6,6 +6,8 @@ import os
 import sqlite3
 import time
 import hashlib
+import random
+
 
 progPath = os.path.dirname(os.path.abspath(__file__))
 
@@ -36,7 +38,7 @@ def getChannelList() -> dict:
 def getNotUploaded(channel, files) -> list:
     curr.execute(f"""CREATE TEMP TABLE a(files TEXT)""")
     for a in files: #hack to insert list that's slow af
-        curr.execute(f"""INSERT INTO a(files) VALUES('{a}')""")
+        curr.execute(f"""INSERT INTO a(files) VALUES("{a}")""")
     curr.execute(f"""DELETE FROM a WHERE files in (SELECT file FROM uploaded WHERE channel = '{channel}')""")
     unUploaded = curr.execute(f"""SELECT files FROM a""").fetchall()
     unUploaded = list(a[0] for a in unUploaded) #one list
@@ -68,8 +70,11 @@ def thumbnailCreator(video) -> str:
 def uploadToLBRY(channels, channel, file) -> str:
     channelInfo = channels[channel]
     thumbnail = imgurUploader(thumbnailCreator(file))
+    name = str(hashlib.sha256(os.path.splitext(file)[0].encode('utf-8').strip()).hexdigest())[:5] + str(os.path.splitext(os.path.basename(file))[0])
+    nameTable = name.maketrans("", "", " !@#$%^&*()_-+=[]:,<.>/?;:'\|")
+    name = name.translate(nameTable)
     upload = requests.post("http://localhost:5279", json={"method": "publish", "params": {
-                                "name": str(hashlib.sha256(os.path.splitext(file)[0].encode('utf-8').strip()).hexdigest())[:5] + str(os.path.splitext(os.path.basename(file))[0].replace(' ', '')), 
+                                "name": name, 
                                 "bid": channelInfo['upload_fee'], "file_path": file, "title": os.path.splitext(os.path.basename(file))[0], "tags": channelInfo['content_tags'], 
                                 "thumbnail_url": thumbnail, "channel_id": channelInfo['channel_id'], "account_id": "bQnAHW3yQAMKrzMUrzevb6zPFDtHABhmXr", "wallet_id": "nsfw", 
                                 "funding_account_ids": ["bQnAHW3yQAMKrzMUrzevb6zPFDtHABhmXr", "bPqPneKocvBHye5aRGZE1E2qjKExjKKtYX"]}}).json()
@@ -77,14 +82,15 @@ def uploadToLBRY(channels, channel, file) -> str:
     print(upload)
     if 'error' in upload.keys():
         checkBal()
-        return(upload['error']['data']['message'])
+        afterError = uploadToLBRY(channels, channel, file)
+        return(afterError)
     else:
         insertNewUpload(channel, file, (upload["result"]["outputs"][0]["permanent_url"]))
         return(upload['result']['outputs'][0]['permanent_url'])
 
 if __name__ == "__main__":
     global dataBase, curr
-    while True:
+    for gayloop in range(0,1):
         dataBase = sqlite3.connect(progPath + '/db.s3db')
         curr = dataBase.cursor()
         channels = getChannelList()
@@ -93,7 +99,9 @@ if __name__ == "__main__":
             #allows for content to be spread across different folders
             fileList = []
             for d in (0, len(channels[a]['content_folder'])-1):
-                fileList.extend([channels[a]['content_folder'][d] + '/' + b for b in os.listdir(channels[a]['content_folder'][d]) if not '!qB' in b])
+                for (root,dirs,files) in os.walk(channels[a]['content_folder'][d], topdown=True, followlinks=True):
+                    #combines root and name together if name does not have !qB in it and adds to list, otherwise add None (e), then removes every none in list (f) 
+                    fileList.extend(f for f in [(root.replace('\\', '/') + '/' + e) if '.!qB' not in e else None for e in files] if f)
             notUploaded = getNotUploaded(a, fileList)
             print(notUploaded)
             for c in notUploaded[0:1]:
