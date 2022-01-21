@@ -17,6 +17,7 @@ def checkBal() -> str:
     time.sleep(90)
     wallet = requests.post("http://localhost:5279", json={"method": "wallet_balance", "params": {"wallet_id": "nsfw"}}).json()
     walletBal = float(wallet['result']['available'])
+    print(walletBal)
 
     if(walletBal <= 1):
         print('--unlocking funds--')
@@ -100,6 +101,8 @@ if __name__ == "__main__":
             fileList = []
             for d in (0, len(channels[a]['content_folder'])-1):
                 for (root,dirs,files) in os.walk(channels[a]['content_folder'][d], topdown=True, followlinks=True):
+                    if "ignore" in channels[a].keys():
+                        dirs[:] = [g for g in dirs if g not in channels[a]['ignore']]
                     #combines root and name together if name does not have !qB in it and adds to list, otherwise add None (e), then removes every none in list (f) 
                     fileList.extend(f for f in [(root.replace('\\', '/') + '/' + e) if '.!qB' not in e else None for e in files] if f)
             notUploaded = getNotUploaded(a, fileList)

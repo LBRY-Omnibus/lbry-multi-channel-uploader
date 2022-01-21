@@ -6,16 +6,16 @@ import json
 
 progPath = os.path.dirname(os.path.abspath(__file__))
 
-oldFolder = 'A:/Desktop/naughty/music video'
-newFolder = 'A:/Desktop/naughty/pretty cvnt'
+oldFolder = 'D:/'
+newFolder = 'E:/'
 
 #changes in db
-dataBase = sqlite3.connect(progPath + '/db - Copy.s3db')
+dataBase = sqlite3.connect(progPath + '/db.s3db')
 curr = dataBase.cursor()
 allFiles = list(b[0] for b in curr.execute(f""" SELECT file FROM uploaded """).fetchall())
-for a in range(0, len(allFiles)-1):
+for a in range(0, len(allFiles)):
     allFiles[a] = [os.path.dirname(allFiles[a]), os.path.basename(allFiles[a])]
-for b in range(0, len(allFiles)-1):
+for b in range(0, len(allFiles)):
     if allFiles[b][0] == oldFolder:
         curr.execute(f""" UPDATE uploaded SET file = "{newFolder + '/' + allFiles[b][1]}" WHERE file = "{allFiles[b][0] + '/' + allFiles[b][1]}" """)
         allFiles[b][0] == newFolder
