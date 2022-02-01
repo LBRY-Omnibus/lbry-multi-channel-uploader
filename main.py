@@ -108,18 +108,16 @@ def uploadProcess(lbryData, wallet, channel) -> None:
 
 if __name__ == "__main__":
     global dataBase, curr
-    for gayloop in range(0,1): #shit hack for making bad code run once 
-        dataBase = sqlite3.connect(progPath + '/db.s3db')
-        curr = dataBase.cursor()
-        lbryData = getChannelList()
-        for wallet in lbryData:
-            addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':wallet}}).json()
-            for channel in lbryData[wallet]:
-                uploadProcess(lbryData, wallet, channel)
-
-            if not wallet == "default_wallet":
-                removeWallet = requests.post("http://localhost:5279", json={"method": "wallet_remove", "params": {'wallet_id':wallet}}).json()
-            gc.collect()
-        dataBase.close()
-        print("--Finnished Set, Sleeping--")
-        time.sleep(30)
+    dataBase = sqlite3.connect(progPath + '/db.s3db')
+    curr = dataBase.cursor()
+    lbryData = getChannelList()
+    for wallet in  ['default_wallet']:
+        addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':wallet}}).json()
+        for channel in lbryData[wallet]:
+            uploadProcess(lbryData, wallet, channel)
+        if not wallet == "default_wallet":
+            removeWallet = requests.post("http://localhost:5279", json={"method": "wallet_remove", "params": {'wallet_id':wallet}}).json()
+        gc.collect()
+    dataBase.close()
+    print("--Finnished Set, Sleeping--")
+    time.sleep(30)
