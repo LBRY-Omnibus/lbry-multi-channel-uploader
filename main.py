@@ -39,7 +39,7 @@ def getNotUploaded(channel, files) -> list:
     curr.execute(f"""CREATE TEMP TABLE a(files TEXT)""")
     for a in files: #hack to insert list that's slow af
         curr.execute(f"""INSERT INTO a(files) VALUES("{a}")""")
-    curr.execute(f"""DELETE FROM a WHERE files in (SELECT file FROM uploaded WHERE channel = '{channel}')""")
+    curr.execute(f"""DELETE FROM a WHERE files in (SELECT file FROM uploaded WHERE channel_name = '{channel}')""")
     unUploaded = curr.execute(f"""SELECT files FROM a""").fetchall()
     unUploaded = list(a[0] for a in unUploaded) #one list
     curr.execute(f"""DROP TABLE a""")
@@ -47,7 +47,7 @@ def getNotUploaded(channel, files) -> list:
 
 #add uploaded to db
 def insertNewUpload(wallet, channel, file, url) -> None:
-    curr.execute(f"""INSERT INTO uploaded(wallet, channel, file, url) VALUES('{wallet}', '{channel}', '{file}', '{url}')""")
+    curr.execute(f"""INSERT INTO uploaded(wallet, channel_name, file, url) VALUES('{wallet}', '{channel}', '{file}', '{url}')""")
     dataBase.commit()
     return()
 
@@ -111,12 +111,12 @@ if __name__ == "__main__":
     dataBase = sqlite3.connect(progPath + '/db.s3db')
     curr = dataBase.cursor()
     lbryData = getChannelList()
-    for wallet in  ['default_wallet']:
+    for wallet in lbryData:
         addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':wallet}}).json()
         for channel in lbryData[wallet]:
             uploadProcess(lbryData, wallet, channel)
-        if not wallet == "default_wallet":
-            removeWallet = requests.post("http://localhost:5279", json={"method": "wallet_remove", "params": {'wallet_id':wallet}}).json()
+    if not wallet == "default_wallet":
+        removeWallet = requests.post("http://localhost:5279", json={"method": "wallet_remove", "params": {'wallet_id':wallet}}).json()
         gc.collect()
     dataBase.close()
     print("--Finnished Set, Sleeping--")
