@@ -87,37 +87,24 @@ def uploadToLBRY(wallet, channels, channel, file, funding_account_ids, account_i
         insertNewUpload(wallet, channel, file, (upload["result"]["outputs"][0]["permanent_url"]))
         return(upload['result']['outputs'][0]['permanent_url'])
 
-def uploadProcess(lbryData, wallet, channel) -> None:
-        print(channel)
-        #allows for content to be spread across different folders
-        fileList = []
-        for d in (0, len(lbryData[wallet][channel]['content_folder'])-1):
-            for (root,dirs,files) in os.walk(lbryData[wallet][channel]['content_folder'][d], topdown=True, followlinks=True):
-                if "ignore" in lbryData[wallet][channel].keys():
-                    dirs[:] = [g for g in dirs if g not in lbryData[wallet][channel]['ignore']]
-                #combines root and name together if name does not have !qB in it and adds to list, otherwise add None (e), then removes every none in list (f) 
-                fileList.extend(f for f in [(root.replace('\\', '/') + '/' + e) if '.!qB' not in e else None for e in files] if f)
-        notUploaded = getNotUploaded(channel, fileList)
-        print(notUploaded)
-        for c in notUploaded[0:1]:
-            url = uploadToLBRY(wallet, lbryData[wallet], channel, c, lbryData[wallet][channel]['funding_account_ids'], lbryData[wallet][channel]['account_id'])
-            print(url)
-        print("--Sleeping--")
-        time.sleep(30) if not len(notUploaded) == 0 else time.sleep(1)
-        return()
-
 if __name__ == "__main__":
     global dataBase, curr
     dataBase = sqlite3.connect(progPath + '/db.s3db')
     curr = dataBase.cursor()
-    lbryData = getChannelList()
-    for wallet in lbryData:
-        addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':wallet}}).json()
-        for channel in lbryData[wallet]:
-            uploadProcess(lbryData, wallet, channel)
-    if not wallet == "default_wallet":
-        removeWallet = requests.post("http://localhost:5279", json={"method": "wallet_remove", "params": {'wallet_id':wallet}}).json()
-        gc.collect()
+    #addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':wallet}}).json()
+
+    #fileList = []
+    #for d in (0, len(lbryData[wallet][channel]['content_folder'])-1):
+    #    for (root,dirs,files) in os.walk(lbryData[wallet][channel]['content_folder'][d], topdown=True, followlinks=True):
+    #        if "ignore" in lbryData[wallet][channel].keys():
+    #            dirs[:] = [g for g in dirs if g not in lbryData[wallet][channel]['ignore']]
+    #        #combines root and name together if name does not have !qB in it and adds to list, otherwise add None (e), then removes every none in list (f) 
+    #        fileList.extend(f for f in [(root.replace('\\', '/') + '/' + e) if '.!qB' not in e else None for e in files] if f)
+    #notUploaded = getNotUploaded(channel, fileList)
+
+    #url = uploadToLBRY(wallet, lbryData[wallet], channel, c, lbryData[wallet][channel]['funding_account_ids'], lbryData[wallet][channel]['account_id'])
+
+    gc.collect()
     dataBase.close()
     print("--Finnished Set, Sleeping--")
     time.sleep(30)
