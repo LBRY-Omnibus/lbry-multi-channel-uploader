@@ -6,7 +6,7 @@ import sqlite3
 import time
 import hashlib
 import gc
-
+import dbCreate
 
 progPath = os.path.dirname(os.path.abspath(__file__))
 
@@ -67,40 +67,54 @@ def thumbnailCreator(video) -> str:
      return(progPath + "/temp/thumbnailTemp.gif")
 
 #uploads video to lbry
-def uploadToLBRY(wallet, channels, channel, file, funding_account_ids, account_id) -> str:
-    channelInfo = channels[channel]
+def uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, contentTags, fundingAccounts, file) -> str:
     thumbnail = imgurUploader(thumbnailCreator(file))
     name = str(hashlib.sha256(os.path.splitext(file)[0].encode('utf-8').strip()).hexdigest())[:5] + str(os.path.splitext(os.path.basename(file))[0])
     nameTable = name.maketrans("", "", " !@#$%^&*()_-+=[]:,<.>/?;:'\|")
     name = name.translate(nameTable)
     upload = requests.post("http://localhost:5279", json={"method": "publish", "params": {
-                                "name": name, 
-                                "bid": channelInfo['upload_fee'], "file_path": file, "title": os.path.splitext(os.path.basename(file))[0], "tags": channelInfo['content_tags'], 
-                                "thumbnail_url": thumbnail, "channel_id": channelInfo['channel_id'], "account_id": account_id, "wallet_id": wallet, 
-                                "funding_account_ids": funding_account_ids}}).json()
+                            "name": name, "bid": uploadFee, "file_path": file, "title": os.path.splitext(os.path.basename(file))[0], 
+                            "tags": contentTags, "thumbnail_url": thumbnail, "channel_id": channelId, "account_id": acountId, "wallet_id": walletName, 
+                            "funding_account_ids": fundingAccounts}}).json()
     print(upload)
     if 'error' in upload.keys():
-        checkBal(wallet)
-        afterError = uploadToLBRY(channels, channel, file)
+        checkBal(walletName)
+        afterError = uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, contentTags, fundingAccounts, file)
         return(afterError)
     else:
-        insertNewUpload(wallet, channel, file, (upload["result"]["outputs"][0]["permanent_url"]))
+        insertNewUpload(walletName, channelName, file, (upload["result"]["outputs"][0]["permanent_url"]))
         return(upload['result']['outputs'][0]['permanent_url'])
 
 if __name__ == "__main__":
     global dataBase, curr
+    dbCreate.__main()
     dataBase = sqlite3.connect(progPath + '/db.s3db')
     curr = dataBase.cursor()
-    #addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':wallet}}).json()
+    channelName = 'vidya'
 
-    #fileList = []
-    #for d in (0, len(lbryData[wallet][channel]['content_folder'])-1):
-    #    for (root,dirs,files) in os.walk(lbryData[wallet][channel]['content_folder'][d], topdown=True, followlinks=True):
-    #        if "ignore" in lbryData[wallet][channel].keys():
-    #            dirs[:] = [g for g in dirs if g not in lbryData[wallet][channel]['ignore']]
-    #        #combines root and name together if name does not have !qB in it and adds to list, otherwise add None (e), then removes every none in list (f) 
-    #        fileList.extend(f for f in [(root.replace('\\', '/') + '/' + e) if '.!qB' not in e else None for e in files] if f)
-    #notUploaded = getNotUploaded(channel, fileList)
+    channelDat = curr.execute(f"""SELECT * FROM channels WHERE channel_name = '{channelName}' """).fetchall()
+    contentTags = curr.execute(f"""SELECT tag FROM content_tag WHERE channel_name = '{channelName}' """).fetchall()
+    contentTags = [a[0] for a in contentTags]
+    fundingAccounts = curr.execute(f"""SELECT account_id FROM funding_account WHERE channel_name = '{channelName}' """).fetchall()
+    fundingAccounts = [a[0] for a in fundingAccounts]
+    contentFolders = curr.execute(f"""SELECT folder FROM content_folder WHERE channel_name = '{channelName}' """).fetchall()
+    contentFolders = [a[0] for a in contentFolders]
+
+    addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':channelDat[0][2]}}).json()
+
+    fileList = []
+    for d in (0, len(contentFolders)-1):
+        for (root,dirs,files) in os.walk(contentFolders[d], topdown=True, followlinks=True):
+            '''
+            if "ignore" in lbryData[wallet][channel].keys():
+                dirs[:] = [g for g in dirs if g not in lbryData[wallet][channel]['ignore']]
+            '''
+            #combines root and name together if name does not have !qB in it and adds to list, otherwise add None (e), then removes every none in list (f) 
+            fileList.extend(f for f in [(root.replace('\\', '/') + '/' + e) if '.!qB' not in e else None for e in files] if f)
+    notUploaded = getNotUploaded(channelName, fileList)
+
+    url = uploadToLBRY(channelName = channelDat[0][0], channelId = channelDat[0][1], walletName = channelDat[0][2], acountId = channelDat[0][3], uploadFee = channelDat[0][4],
+                        contentTags = contentTags, fundingAccounts = fundingAccounts, file = fileList[0])
 
     #url = uploadToLBRY(wallet, lbryData[wallet], channel, c, lbryData[wallet][channel]['funding_account_ids'], lbryData[wallet][channel]['account_id'])
 
