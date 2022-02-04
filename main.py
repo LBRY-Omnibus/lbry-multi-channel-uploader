@@ -105,16 +105,19 @@ if __name__ == "__main__":
     fileList = []
     for d in (0, len(contentFolders)-1):
         for (root,dirs,files) in os.walk(contentFolders[d], topdown=True, followlinks=True):
-            '''
-            if "ignore" in lbryData[wallet][channel].keys():
-                dirs[:] = [g for g in dirs if g not in lbryData[wallet][channel]['ignore']]
-            '''
+            ignoreDirs = curr.execute(f"""SELECT ignore_location, ignore, ignore_type FROM ignore WHERE channel_name = '{channelName}' """).fetchall()
+            for e in ignoreDirs:
+                if e[0] == root:
+                    if e[2] == 'dir':
+                        dirs[:] = [g for g in dirs if g not in e[0]]
+                    if e[2] == 'file':
+                        files[:] = [f for f in files if not (e[1] == f and e[2] == 'file')]
             #combines root and name together if name does not have !qB in it and adds to list, otherwise add None (e), then removes every none in list (f) 
             fileList.extend(f for f in [(root.replace('\\', '/') + '/' + e) if '.!qB' not in e else None for e in files] if f)
     notUploaded = getNotUploaded(channelName, fileList)
 
-    url = uploadToLBRY(channelName = channelDat[0][0], channelId = channelDat[0][1], walletName = channelDat[0][2], acountId = channelDat[0][3], uploadFee = channelDat[0][4],
-                        contentTags = contentTags, fundingAccounts = fundingAccounts, file = fileList[0])
+    #url = uploadToLBRY(channelName = channelDat[0][0], channelId = channelDat[0][1], walletName = channelDat[0][2], acountId = channelDat[0][3], uploadFee = channelDat[0][4],
+    #                    contentTags = contentTags, fundingAccounts = fundingAccounts, file = notUploaded[0])
 
     #url = uploadToLBRY(wallet, lbryData[wallet], channel, c, lbryData[wallet][channel]['funding_account_ids'], lbryData[wallet][channel]['account_id'])
 
