@@ -101,7 +101,7 @@ if __name__ == "__main__":
     contentFolders = [a[0] for a in contentFolders]
 
     addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':channelDat[0][2]}}).json()
-
+    # for removing directories and files in channels in a channels ignore list
     fileList = []
     for d in (0, len(contentFolders)-1):
         for (root,dirs,files) in os.walk(contentFolders[d], topdown=True, followlinks=True):
