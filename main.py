@@ -116,12 +116,8 @@ if __name__ == "__main__":
             fileList.extend(f for f in [(root.replace('\\', '/') + '/' + e) if '.!qB' not in e else None for e in files] if f)
     notUploaded = getNotUploaded(channelName, fileList)
 
-    #url = uploadToLBRY(channelName = channelDat[0][0], channelId = channelDat[0][1], walletName = channelDat[0][2], acountId = channelDat[0][3], uploadFee = channelDat[0][4],
-    #                    contentTags = contentTags, fundingAccounts = fundingAccounts, file = notUploaded[0])
-
-    #url = uploadToLBRY(wallet, lbryData[wallet], channel, c, lbryData[wallet][channel]['funding_account_ids'], lbryData[wallet][channel]['account_id'])
+    url = uploadToLBRY(channelName = channelDat[0][0], channelId = channelDat[0][1], walletName = channelDat[0][2], acountId = channelDat[0][3], uploadFee = channelDat[0][4],
+                        contentTags = contentTags, fundingAccounts = fundingAccounts, file = notUploaded[0])
 
     gc.collect()
     dataBase.close()
-    print("--Finnished Set, Sleeping--")
-    time.sleep(30)
