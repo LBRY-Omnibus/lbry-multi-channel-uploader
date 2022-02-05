@@ -115,6 +115,6 @@ dmypy.json
 
 #custom
 *.s3db
-lbrynet.exe
-channelList.json
-/temp
+/src/lbrynet.exe
+/src/channelList.json
+/src/temp/*
