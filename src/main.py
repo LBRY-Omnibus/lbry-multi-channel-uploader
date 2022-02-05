@@ -1,4 +1,3 @@
-from imgurpython import ImgurClient
 import requests
 import json
 import os
@@ -52,28 +51,13 @@ def insertNewUpload(wallet, channel, file, url) -> None:
     dataBase.commit()
     return()
 
-#uploads thumbnail to imgur
-def imgurUploader(image) -> str:
-    client_id = '30383064d011baa'
-    client_secret = '220dedf34c01f3ce3fd14278819920a3adfec313'
-    client = ImgurClient(client_id, client_secret)
-    thumbnail = client.upload_from_path(image, config=None, anon=True)
-    print(thumbnail['link'])
-    return(thumbnail['link'])
-
-#creates animated thumbnail off video
-'''
-def thumbnailCreator(video) -> str:
-     os.system(f"""ffmpeg -i "{video}" -fs 3M -vf "scale=640:-2" -y "{progPath + '/temp/thumbnailTemp.gif'}" """)
-     print(progPath + "/temp/thumbnailTemp.gif")
-     return(progPath + "/temp/thumbnailTemp.gif")
-'''
-
 #uploads video to lbry
 def uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, contentTags, fundingAccounts, file) -> str:
     thumbnailScript = 'gifFirst3Sec'
+    thumbnailUploadScript = 'imgur'
     thumbnailImport = importlib.import_module(f'scripts.thumbnail.{thumbnailScript}.{thumbnailScript}')
-    thumbnail = imgurUploader(thumbnailImport.main(file))
+    thumbnailUploadImport = importlib.import_module(f'scripts.thumbnailUpload.{thumbnailUploadScript}.{thumbnailUploadScript}')
+    thumbnail = thumbnailUploadImport.main(thumbnailImport.main(file))
     name = str(hashlib.sha256(os.path.splitext(file)[0].encode('utf-8').strip()).hexdigest())[:5] + str(os.path.splitext(os.path.basename(file))[0])
     nameTable = name.maketrans("", "", " !@#$%^&*()_-+=[]:,<.>/?;:'\|")
     name = name.translate(nameTable)
@@ -81,7 +65,6 @@ def uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, conten
                             "name": name, "bid": uploadFee, "file_path": file, "title": os.path.splitext(os.path.basename(file))[0], 
                             "tags": contentTags, "thumbnail_url": thumbnail, "channel_id": channelId, "account_id": acountId, "wallet_id": walletName, 
                             "funding_account_ids": fundingAccounts}}).json()
-    print(upload)
     if 'error' in upload.keys():
         checkBal(walletName)
         afterError = uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, contentTags, fundingAccounts, file)
