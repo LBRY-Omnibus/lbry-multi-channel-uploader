@@ -117,4 +117,4 @@ dmypy.json
 *.s3db
 /src/lbrynet.exe
 /src/channelList.json
-/src/temp/*
+src/temp/*
