@@ -6,6 +6,7 @@ import sqlite3
 import time
 import hashlib
 import gc
+import importlib
 import dbCreate
 
 progPath = os.path.dirname(os.path.abspath(__file__))
@@ -61,14 +62,18 @@ def imgurUploader(image) -> str:
     return(thumbnail['link'])
 
 #creates animated thumbnail off video
+'''
 def thumbnailCreator(video) -> str:
      os.system(f"""ffmpeg -i "{video}" -fs 3M -vf "scale=640:-2" -y "{progPath + '/temp/thumbnailTemp.gif'}" """)
      print(progPath + "/temp/thumbnailTemp.gif")
      return(progPath + "/temp/thumbnailTemp.gif")
+'''
 
 #uploads video to lbry
 def uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, contentTags, fundingAccounts, file) -> str:
-    thumbnail = imgurUploader(thumbnailCreator(file))
+    thumbnailScript = 'gifFirst3Sec'
+    thumbnailImport = importlib.import_module(f'scripts.thumbnail.{thumbnailScript}.{thumbnailScript}')
+    thumbnail = imgurUploader(thumbnailImport.main(file))
     name = str(hashlib.sha256(os.path.splitext(file)[0].encode('utf-8').strip()).hexdigest())[:5] + str(os.path.splitext(os.path.basename(file))[0])
     nameTable = name.maketrans("", "", " !@#$%^&*()_-+=[]:,<.>/?;:'\|")
     name = name.translate(nameTable)
