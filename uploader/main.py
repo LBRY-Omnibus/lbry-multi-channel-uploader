@@ -79,7 +79,6 @@ if __name__ == "__main__":
     dataBase = sqlite3.connect(progPath + '/db.s3db')
     curr = dataBase.cursor()
     channelName = 'vidya'
-
     channelDat = curr.execute(f"""SELECT * FROM channels WHERE channel_name = '{channelName}' """).fetchall()
     contentTags = curr.execute(f"""SELECT tag FROM content_tag WHERE channel_name = '{channelName}' """).fetchall()
     contentTags = [a[0] for a in contentTags]
