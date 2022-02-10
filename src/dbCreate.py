@@ -5,7 +5,7 @@ progPath = os.path.dirname(os.path.abspath(__file__))
 
 def __main():
     global dataBase, curr
-    dataBase = sqlite3.connect(progPath + '/db.s3db')
+    dataBase = sqlite3.connect(progPath + '/data/db.s3db')
     curr = dataBase.cursor()
 
     curr.execute(f"""CREATE TABLE IF NOT EXISTS uploaded (wallet TEXT, channel_name TEXT, file TEXT, url TEXT) """)

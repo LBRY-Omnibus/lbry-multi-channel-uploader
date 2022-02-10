@@ -76,8 +76,9 @@ def uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, conten
 if __name__ == "__main__":
     global dataBase, curr
     dbCreate.__main()
-    dataBase = sqlite3.connect(progPath + '/db.s3db')
+    dataBase = sqlite3.connect(progPath + '/data/db.s3db')
     curr = dataBase.cursor()
+
     channelName = 'vidya'
     channelDat = curr.execute(f"""SELECT * FROM channels WHERE channel_name = '{channelName}' """).fetchall()
     contentTags = curr.execute(f"""SELECT tag FROM content_tag WHERE channel_name = '{channelName}' """).fetchall()
