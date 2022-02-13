@@ -54,7 +54,7 @@ def insertNewUpload(wallet, channel, file, url) -> None:
 #uploads video to lbry
 def uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, contentTags, fundingAccounts, file) -> str:
     thumbnailScript = 'gifFirst3Sec'
-    thumbnailUploadScript = 'imgur'
+    thumbnailUploadScript = 'lbry'
     thumbnailImport = importlib.import_module(f'scripts.thumbnail.{thumbnailScript}.{thumbnailScript}')
     thumbnailUploadImport = importlib.import_module(f'scripts.thumbnailUpload.{thumbnailUploadScript}.{thumbnailUploadScript}')
     thumbnail = thumbnailUploadImport.main(thumbnailImport.main(file))
