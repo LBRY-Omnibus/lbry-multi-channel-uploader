@@ -73,7 +73,7 @@ def uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, conten
         insertNewUpload(walletName, channelName, file, (upload["result"]["outputs"][0]["permanent_url"]))
         return(upload['result']['outputs'][0]['permanent_url'])
 
-if __name__ == "__main__":
+def main():
     global dataBase, curr
     dbCreate.__main()
     dataBase = sqlite3.connect(progPath + '/data/db.s3db')
@@ -93,8 +93,8 @@ if __name__ == "__main__":
     fileList = []
     for d in (0, len(contentFolders)-1):
         for (root,dirs,files) in os.walk(contentFolders[d], topdown=True, followlinks=True):
-            ignoreDirs = curr.execute(f"""SELECT ignore_location, ignore, ignore_type FROM ignore WHERE channel_name = '{channelName}' """).fetchall()
-            for e in ignoreDirs:
+            ignores = curr.execute(f"""SELECT ignore_location, ignore, ignore_type FROM ignore WHERE channel_name = '{channelName}' """).fetchall()
+            for e in ignores:
                 if e[0] == root:
                     if e[2] == 'dir':
                         dirs[:] = [g for g in dirs if g not in e[0]]
@@ -109,3 +109,6 @@ if __name__ == "__main__":
 
     gc.collect()
     dataBase.close()
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,12 @@
+{
+    "upload":[
+        "all",
+        {
+            "in":[
+                {"channel":"vidya"},
+                "OR",
+                {"channel":"goth"}
+            ]
+        }
+    ]
+}
