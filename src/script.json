@@ -3,9 +3,9 @@
         "all",
         {
             "in":[
-                {"channel":"vidya"},
+                {"channel_name":"vidya"},
                 "OR",
-                {"channel":"goth"}
+                {"channel_name":"goth"}
             ]
         }
     ]
