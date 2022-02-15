@@ -76,7 +76,7 @@ def uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, conten
 def main():
     global dataBase, curr
     dbCreate.__main()
-    dataBase = sqlite3.connect(progPath + '/data/db.s3db')
+    dataBase = sqlite3.connect(progPath + '/data/database/db.s3db')
     curr = dataBase.cursor()
 
     channelName = 'vidya'

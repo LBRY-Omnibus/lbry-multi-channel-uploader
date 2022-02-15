@@ -5,7 +5,7 @@ import sqlite3
 progPath = os.path.dirname(os.path.abspath(__file__))
 
 global dataBase, curr
-dataBase = sqlite3.connect(progPath + '/data/db.s3db')
+dataBase = sqlite3.connect(progPath + '/data/database/db.s3db')
 curr = dataBase.cursor()
 
 with open('./script.json', 'r') as jsonRaw:
