@@ -20,26 +20,31 @@ for a in jsonDat:
         # -----------------------------------------------------------------------------------------------
         if 'in' in list(jsonDat[a][1])[0]:
             query = "SELECT * FROM channels WHERE"
-            for b in jsonDat[a][1]['in']:
+            arguments = jsonDat[a][1]['in']
+            for c,b in enumerate(arguments):
+                #if the datatype is a dict then treat it as a argument and interprit 
                 if type(b) == dict:
                     dictHeader = list(b)[0]
-                    #includes channel with given name, id, wallet name, account id, or fee
                     if dictHeader in ['channel_name', 'channel_id', 'wallet_name', 'acount_id', 'upload_fee']:
                         query += f" {dictHeader} = '{b[dictHeader]}'"
-                    #includes channel with given folder, tag, ot funding account
                     dictDataField = {'content_folder':'folder', 'content_tag': 'channel_name', 'funding_account':'channel_name'}
                     if dictHeader in list(dictDataField):
                         query += f" channel_name IN (SELECT channel_name FROM {dictHeader} WHERE {dictDataField[dictHeader]} = '{b[dictHeader]}')"
-                
+                    # if a modfifier (AND, OR, etc) is not given next and not at the end add AND
+                    if c+1 <= len(arguments)-1:
+                        if not type(arguments[c+1]) == str:
+                            query += " AND"
+                # if the datatype is string and in the list of operators then add the string as and operator
                 elif type(b) == str and b in ['OR', 'AND', 'OR NOT', 'AND NOT']:
                     query += f" {b}"
         else:
             query = "SELECT * FROM channels"
+        print(query)
         channelDat = curr.execute(query).fetchall()
         # -----------------------------------------------------------------------------------------------
         # while 'in' grabs channels if they have the given data,
         # 'where' uses the data for each channel if the conditions say so
         # -----------------------------------------------------------------------------------------------
-        if 'in' in list(jsonDat[a][1])[0]:
+        if 'where' in list(jsonDat[a][1])[0]:
             pass
             #make soemtime soon please an thank future me

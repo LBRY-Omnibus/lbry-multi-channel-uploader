@@ -4,7 +4,6 @@
         {
             "in":[
                 {"channel_name":"vidya"},
-                "OR",
                 {"channel_name":"goth"},
                 "AND",
                 {"content_folder":"/test"}
