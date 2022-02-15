@@ -73,7 +73,7 @@ def uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, conten
         insertNewUpload(walletName, channelName, file, (upload["result"]["outputs"][0]["permanent_url"]))
         return(upload['result']['outputs'][0]['permanent_url'])
 
-def main():
+def main(channelDat, contentTags, fundingAccounts, contentFolders):
     global dataBase, curr
     dbCreate.__main()
     dataBase = sqlite3.connect(progPath + '/data/database/db.s3db')

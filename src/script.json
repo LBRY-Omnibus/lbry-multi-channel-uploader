@@ -6,6 +6,9 @@
                 {"channel_name":"vidya"},
                 "OR",
                 {"channel_name":"goth"}
+            ],
+            "where":[
+                {"folders":"test1"}
             ]
         }
     ]
