@@ -8,7 +8,7 @@ def __main():
     dataBase = sqlite3.connect(progPath + '/data/database/db.s3db')
     curr = dataBase.cursor()
 
-    curr.execute(f"""CREATE TABLE IF NOT EXISTS uploaded (wallet TEXT, channel_name TEXT, file TEXT, url TEXT) """)
+    curr.execute(f"""CREATE TABLE IF NOT EXISTS uploaded (wallet TEXT, channel_name TEXT, file_path TEXT, file_name TEXT, url TEXT) """)
     curr.execute(f"""CREATE TABLE IF NOT EXISTS ignore (channel_name TEXT, ignore_location TEXT, ignore TEXT, ignore_type TEXT) """)
     curr.execute(f"""CREATE TABLE IF NOT EXISTS funding_account (channel_name TEXT, account_id TEXT)""")
     curr.execute(f"""CREATE TABLE IF NOT EXISTS content_tag (channel_name TEXT, tag TEXT)""")
@@ -18,3 +18,6 @@ def __main():
 
     dataBase.commit()
     dataBase.close()
+
+if __name__ == '__main__':
+    __main()
