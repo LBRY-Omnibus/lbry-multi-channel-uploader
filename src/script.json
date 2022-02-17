@@ -3,7 +3,7 @@
         "all",
         {
             "in":[
-                {"channel_name":"vidya"}
+                {"wallet_name":"default_wallet"}
             ]
         }
     ]
