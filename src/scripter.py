@@ -1,6 +1,7 @@
 import json 
 import os
 import sqlite3
+import main
 
 progPath = os.path.dirname(os.path.abspath(__file__))
 
@@ -48,3 +49,13 @@ for a in jsonDat:
         if 'where' in list(jsonDat[a][1])[0]:
             pass
             #make soemtime soon please an thank future me
+    for channel in channelDat:
+        contentTags = curr.execute(f"""SELECT tag FROM content_tag WHERE channel_name = '{channel[0]}' """).fetchall()
+        contentTags = [a[0] for a in contentTags]
+        fundingAccounts = curr.execute(f"""SELECT account_id FROM funding_account WHERE channel_name = '{channel[0]}' """).fetchall()
+        fundingAccounts = [a[0] for a in fundingAccounts]
+        contentFolders = curr.execute(f"""SELECT folder FROM content_folder WHERE channel_name = '{channel[0]}' """).fetchall()
+        contentFolders = [a[0] for a in contentFolders]
+        print(contentFolders)
+        main.main(channel, contentTags, fundingAccounts, contentFolders)
+        

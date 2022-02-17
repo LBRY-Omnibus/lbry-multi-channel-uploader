@@ -3,10 +3,7 @@
         "all",
         {
             "in":[
-                {"channel_name":"vidya"},
-                {"channel_name":"goth"},
-                "AND",
-                {"content_folder":"/test"}
+                {"channel_name":"vidya"}
             ]
         }
     ]

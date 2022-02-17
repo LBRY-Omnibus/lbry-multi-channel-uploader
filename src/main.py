@@ -34,20 +34,9 @@ def getChannelList() -> dict:
     with open('./channelList.json', 'r') as jsonRaw:
         return json.load(jsonRaw)
 
-#grabs what hasn't been uploaded under a channel from a list of all files
-def getNotUploaded(channel, files) -> list:
-    curr.execute(f"""CREATE TEMP TABLE a(files TEXT)""")
-    for a in files: #hack to insert list that's slow af
-        curr.execute(f"""INSERT INTO a(files) VALUES("{a}")""")
-    curr.execute(f"""DELETE FROM a WHERE files in (SELECT file FROM uploaded WHERE channel_name = '{channel}')""")
-    unUploaded = curr.execute(f"""SELECT files FROM a""").fetchall()
-    unUploaded = list(a[0] for a in unUploaded) #one list
-    curr.execute(f"""DROP TABLE a""")
-    return(unUploaded)
-
 #add uploaded to db
 def insertNewUpload(wallet, channel, file, url) -> None:
-    curr.execute(f"""INSERT INTO uploaded(wallet, channel_name, file, url) VALUES('{wallet}', '{channel}', '{file}', '{url}')""")
+    curr.execute(f"""INSERT INTO uploaded(wallet, channel_name, file_path, file_name, url) VALUES('{wallet}', '{channel}', '{file[0]}', '{file[1]}', '{url}')""")
     dataBase.commit()
     return()
 
@@ -58,11 +47,11 @@ def uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, conten
     thumbnailImport = importlib.import_module(f'scripts.thumbnail.{thumbnailScript}.{thumbnailScript}')
     thumbnailUploadImport = importlib.import_module(f'scripts.thumbnailUpload.{thumbnailUploadScript}.{thumbnailUploadScript}')
     thumbnail = thumbnailUploadImport.main(thumbnailImport.main(file))
-    name = str(hashlib.sha256(os.path.splitext(file)[0].encode('utf-8').strip()).hexdigest())[:5] + str(os.path.splitext(os.path.basename(file))[0])
+    name = str(hashlib.sha256(file[0].encode('utf-8').strip()).hexdigest())[:5] + str(os.path.splitext(os.path.basename(file[1]))[0])
     nameTable = name.maketrans("", "", " !@#$%^&*()_-+=[]:,<.>/?;:'\|")
     name = name.translate(nameTable)
     upload = requests.post("http://localhost:5279", json={"method": "publish", "params": {
-                            "name": name, "bid": uploadFee, "file_path": file, "title": os.path.splitext(os.path.basename(file))[0], 
+                            "name": name, "bid": uploadFee, "file_path": os.path.join(file[0], file[1]), "title": os.path.splitext(os.path.basename(file[1]))[0], 
                             "tags": contentTags, "thumbnail_url": thumbnail, "channel_id": channelId, "account_id": acountId, "wallet_id": walletName, 
                             "funding_account_ids": fundingAccounts}}).json()
     if 'error' in upload.keys():
@@ -73,27 +62,18 @@ def uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, conten
         insertNewUpload(walletName, channelName, file, (upload["result"]["outputs"][0]["permanent_url"]))
         return(upload['result']['outputs'][0]['permanent_url'])
 
-def main(channelDat, contentTags, fundingAccounts, contentFolders):
+def main(channel, contentTags, fundingAccounts, contentFolders):
     global dataBase, curr
     dbCreate.__main()
     dataBase = sqlite3.connect(progPath + '/data/database/db.s3db')
     curr = dataBase.cursor()
 
-    channelName = 'vidya'
-    channelDat = curr.execute(f"""SELECT * FROM channels WHERE channel_name = '{channelName}' """).fetchall()
-    contentTags = curr.execute(f"""SELECT tag FROM content_tag WHERE channel_name = '{channelName}' """).fetchall()
-    contentTags = [a[0] for a in contentTags]
-    fundingAccounts = curr.execute(f"""SELECT account_id FROM funding_account WHERE channel_name = '{channelName}' """).fetchall()
-    fundingAccounts = [a[0] for a in fundingAccounts]
-    contentFolders = curr.execute(f"""SELECT folder FROM content_folder WHERE channel_name = '{channelName}' """).fetchall()
-    contentFolders = [a[0] for a in contentFolders]
-
-    addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':channelDat[0][2]}}).json()
+    addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':channel[2]}}).json()
     # for removing directories and files in channels in a channels ignore list
     fileList = []
     for d in (0, len(contentFolders)-1):
         for (root,dirs,files) in os.walk(contentFolders[d], topdown=True, followlinks=True):
-            ignores = curr.execute(f"""SELECT ignore_location, ignore, ignore_type FROM ignore WHERE channel_name = '{channelName}' """).fetchall()
+            ignores = curr.execute(f"""SELECT ignore_location, ignore, ignore_type FROM ignore WHERE channel_name = '{channel[0]}' """).fetchall()
             for e in ignores:
                 if e[0] == root:
                     if e[2] == 'dir':
@@ -101,14 +81,22 @@ def main(channelDat, contentTags, fundingAccounts, contentFolders):
                     if e[2] == 'file':
                         files[:] = [f for f in files if not (e[1] == f and e[2] == 'file')]
             #combines root and name together if name does not have !qB in it and adds to list, otherwise add None (e), then removes every none in list (f) 
-            fileList.extend(f for f in [(root.replace('\\', '/') + '/' + e) if '.!qB' not in e else None for e in files] if f)
-    notUploaded = getNotUploaded(channelName, fileList)
-
-    url = uploadToLBRY(channelName = channelDat[0][0], channelId = channelDat[0][1], walletName = channelDat[0][2], acountId = channelDat[0][3], uploadFee = channelDat[0][4],
-                        contentTags = contentTags, fundingAccounts = fundingAccounts, file = notUploaded[0])
+            fileList.extend(f for f in [([root.replace('\\', '/'), e]) if '.!qB' not in e else None for e in files] if f)
+    #removes duplicates from uploaded table
+    curr.execute(f"""CREATE TEMP TABLE a(file_name TEXT, file_path TEXT)""")
+    for a in fileList:
+        curr.execute(f"""INSERT INTO a(file_path, file_name) VALUES("{a[0]}", "{a[1]}")""")
+    curr.execute(f"""DELETE FROM a WHERE file_path+file_name in (SELECT file_path+file_name FROM uploaded WHERE channel_name = '{channel[0]}')""")
+    notUploaded = curr.execute(f"""SELECT file_path, file_name FROM a""").fetchall()
+    curr.execute(f"""DROP TABLE a""")
+    print(notUploaded)
+    if len(notUploaded) > 0:
+        url = uploadToLBRY(channelName = channel[0], channelId = channel[1], walletName = channel[2], acountId = channel[3], uploadFee = channel[4],
+                            contentTags = contentTags, fundingAccounts = fundingAccounts, file = notUploaded[0])
 
     gc.collect()
     dataBase.close()
+    return()
 
 if __name__ == "__main__":
     main()
