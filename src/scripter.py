@@ -18,7 +18,10 @@ for a in jsonDat:
         inQuery = "SELECT * FROM channels"
         for uploadCommandNum in range(0, len(jsonDat[a]), 1):
             uploadCommand = list(jsonDat[a][uploadCommandNum])[0]
-            
+            # -----------------------------------------------------------------------------------------------
+            # grabs the max upoload ammount if supplied, 
+            # otherwise it defaults to 'all'
+            # -----------------------------------------------------------------------------------------------
             if 'upload_ammount' == uploadCommand:
                 uploadAmmount = jsonDat[a][uploadCommandNum]['upload_ammount']
             # -----------------------------------------------------------------------------------------------
@@ -61,6 +64,7 @@ for a in jsonDat:
         channelUploadAmmount = math.ceil(uploadAmmount/len(channelDat)) if uploadAmmount < len(channelDat) else math.floor(uploadAmmount/len(channelDat))
         # make channelUploadAmount accurate later
     print(channelUploadAmmount)
+    returnedUploadAmmount = 0
     for channel in channelDat:
         contentTags = curr.execute(f"""SELECT tag FROM content_tag WHERE channel_name = '{channel[0]}' """).fetchall()
         contentTags = [a[0] for a in contentTags]
@@ -68,6 +72,5 @@ for a in jsonDat:
         fundingAccounts = [a[0] for a in fundingAccounts]
         contentFolders = curr.execute(f"""SELECT folder FROM content_folder WHERE channel_name = '{channel[0]}' """).fetchall()
         contentFolders = [a[0] for a in contentFolders]
-        
-        #main.main(channel, contentTags, fundingAccounts, contentFolders, channelUploadAmmount)
+        returnedUploadAmmount = main.main(channel, contentTags, fundingAccounts, contentFolders, channelUploadAmmount+returnedUploadAmmount)
         
