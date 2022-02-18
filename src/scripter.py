@@ -72,5 +72,6 @@ for a in jsonDat:
         fundingAccounts = [a[0] for a in fundingAccounts]
         contentFolders = curr.execute(f"""SELECT folder FROM content_folder WHERE channel_name = '{channel[0]}' """).fetchall()
         contentFolders = [a[0] for a in contentFolders]
+        
         returnedUploadAmmount = main.main(channel, contentTags, fundingAccounts, contentFolders, channelUploadAmmount+returnedUploadAmmount)
         
