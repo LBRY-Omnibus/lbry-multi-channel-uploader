@@ -1,6 +1,5 @@
 import sqlite3
 import json
-import sqlite3
 import os 
 
 progPath = os.path.dirname(os.path.abspath(__file__))
@@ -10,7 +9,6 @@ def getChannelList() -> dict:
         return json.load(jsonRaw)
 
 if __name__ == "__main__":
-    global dataBase, curr
     dataBase = sqlite3.connect('../db - Copy.s3db')
     curr = dataBase.cursor()
     lbryData = getChannelList()

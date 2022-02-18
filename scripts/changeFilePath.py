@@ -1,6 +1,5 @@
 #changes the location of a folder across the whole program
 import sqlite3
-import requests
 import os 
 import json
 
