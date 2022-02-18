@@ -74,4 +74,3 @@ for a in jsonDat:
         contentFolders = [a[0] for a in contentFolders]
         
         returnedUploadAmmount = main.main(channel, contentTags, fundingAccounts, contentFolders, channelUploadAmmount+returnedUploadAmmount)
-        
