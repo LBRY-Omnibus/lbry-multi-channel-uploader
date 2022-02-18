@@ -1,6 +1,6 @@
 {
     "upload":[
-        "all",
+        {"upload_ammount":200},
         {
             "in":[
                 {"wallet_name":"default_wallet"}

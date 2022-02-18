@@ -62,37 +62,36 @@ def uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, conten
         insertNewUpload(walletName, channelName, file, (upload["result"]["outputs"][0]["permanent_url"]))
         return(upload['result']['outputs'][0]['permanent_url'])
 
-def main(channel, contentTags, fundingAccounts, contentFolders, uploadAmmount = 1):
+def main(channel, contentTags, fundingAccounts, contentFolders, uploadAmmount):
     global dataBase, curr
     dbCreate.__main()
     dataBase = sqlite3.connect(progPath + '/data/database/db.s3db')
     curr = dataBase.cursor()
 
-    for uploadNum in range(0, uploadAmmount, 1):
-        addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':channel[2]}}).json()
-        # for removing directories and files in channels in a channels ignore list
-        fileList = []
-        for d in (0, len(contentFolders)-1):
-            for (root,dirs,files) in os.walk(contentFolders[d], topdown=True, followlinks=True):
-                ignores = curr.execute(f"""SELECT ignore_location, ignore, ignore_type FROM ignore WHERE channel_name = '{channel[0]}' """).fetchall()
-                for e in ignores:
-                    if e[0] == root:
-                        if e[2] == 'dir':
-                            dirs[:] = [g for g in dirs if g not in e[0]]
-                        if e[2] == 'file':
-                            files[:] = [f for f in files if not (e[1] == f and e[2] == 'file')]
-                #combines root and name together if name does not have !qB in it and adds to list, otherwise add None (e), then removes every none in list (f) 
-                fileList.extend(f for f in [([root.replace('\\', '/'), e]) if '.!qB' not in e else None for e in files] if f)
-        #removes duplicates from uploaded table
-        curr.execute(f"""CREATE TEMP TABLE a(file_name TEXT, file_path TEXT)""")
-        for a in fileList:
-            curr.execute(f"""INSERT INTO a(file_path, file_name) VALUES("{a[0]}", "{a[1]}")""")
-        curr.execute(f"""DELETE FROM a WHERE file_path+file_name in (SELECT file_path+file_name FROM uploaded WHERE channel_name = '{channel[0]}')""")
-        notUploaded = curr.execute(f"""SELECT file_path, file_name FROM a""").fetchall()
-        curr.execute(f"""DROP TABLE a""")
-        if len(notUploaded) > 0:
-            url = uploadToLBRY(channelName = channel[0], channelId = channel[1], walletName = channel[2], acountId = channel[3], uploadFee = channel[4],
-                                contentTags = contentTags, fundingAccounts = fundingAccounts, file = notUploaded[0])
+    addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':channel[2]}}).json()
+    # for removing directories and files in channels in a channels ignore list
+    fileList = []
+    for d in (0, len(contentFolders)-1):
+        for (root,dirs,files) in os.walk(contentFolders[d], topdown=True, followlinks=True):
+            ignores = curr.execute(f"""SELECT ignore_location, ignore, ignore_type FROM ignore WHERE channel_name = '{channel[0]}' """).fetchall()
+            for e in ignores:
+                if e[0] == root:
+                    if e[2] == 'dir':
+                        dirs[:] = [g for g in dirs if g not in e[0]]
+                    if e[2] == 'file':
+                        files[:] = [f for f in files if not (e[1] == f and e[2] == 'file')]
+            #combines root and name together if name does not have !qB in it and adds to list, otherwise add None (e), then removes every none in list (f) 
+            fileList.extend(f for f in [([root.replace('\\', '/'), e]) if '.!qB' not in e else None for e in files] if f)
+    #removes duplicates from uploaded table
+    curr.execute(f"""CREATE TEMP TABLE a(file_name TEXT, file_path TEXT)""")
+    for a in fileList:
+        curr.execute(f"""INSERT INTO a(file_path, file_name) VALUES("{a[0]}", "{a[1]}")""")
+    curr.execute(f"""DELETE FROM a WHERE file_path+file_name in (SELECT file_path+file_name FROM uploaded WHERE channel_name = '{channel[0]}')""")
+    notUploaded = curr.execute(f"""SELECT file_path, file_name FROM a""").fetchall()
+    curr.execute(f"""DROP TABLE a""")
+    if len(notUploaded) > 0:
+        url = uploadToLBRY(channelName = channel[0], channelId = channel[1], walletName = channel[2], acountId = channel[3], uploadFee = channel[4],
+                            contentTags = contentTags, fundingAccounts = fundingAccounts, file = notUploaded[0])
 
     gc.collect()
     dataBase.close()
