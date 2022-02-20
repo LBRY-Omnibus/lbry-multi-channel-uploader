@@ -20,7 +20,6 @@ for a in jsonDat:
         contentFoldersQueryApendix = ""
         for uploadCommandNum in range(0, len(jsonDat[a]), 1):
             uploadCommand = list(jsonDat[a][uploadCommandNum])[0]
-            print(uploadCommand)
             # -----------------------------------------------------------------------------------------------
             # grabs the max upoload ammount if supplied, 
             # otherwise it defaults to 'all'
@@ -51,7 +50,6 @@ for a in jsonDat:
                     # if the datatype is string and in the list of operators then add the string as and operator
                     elif type(b) == str and b in ['OR', 'AND', 'OR NOT', 'AND NOT']:
                         inQuery += f" {b}"
-            print(inQuery)
             # -----------------------------------------------------------------------------------------------
             # 'remove' removes any values from the queries (exclude given data)
             # -----------------------------------------------------------------------------------------------
@@ -68,6 +66,9 @@ for a in jsonDat:
                             fundingAccountQueryApendix += f" AND account_id <> '{b[dictHeader]}'"
                         elif dictHeader == 'content_folder':
                             contentTagQueryApendix += f" AND folder <> '{b[dictHeader]}'"
+            if 'add' == uploadCommand:
+                pass
+                #implement later
     #run querys
     channelDat = curr.execute(inQuery).fetchall()
     if type(uploadAmmount) == str:

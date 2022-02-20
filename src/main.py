@@ -99,6 +99,3 @@ def main(channel, contentTags, fundingAccounts, contentFolders, channelUploadAmm
     gc.collect()
     dataBase.close()
     return(0)
-
-if __name__ == "__main__":
-    main()
