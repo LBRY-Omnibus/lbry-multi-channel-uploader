@@ -20,6 +20,7 @@ for a in jsonDat:
         contentFoldersQueryApendix = ""
         for uploadCommandNum in range(0, len(jsonDat[a]), 1):
             uploadCommand = list(jsonDat[a][uploadCommandNum])[0]
+            print(uploadCommand)
             # -----------------------------------------------------------------------------------------------
             # grabs the max upoload ammount if supplied, 
             # otherwise it defaults to 'all'
@@ -52,35 +53,21 @@ for a in jsonDat:
                         inQuery += f" {b}"
             print(inQuery)
             # -----------------------------------------------------------------------------------------------
-            # while 'in' grabs channels if they have the given data,
-            # 'where' uses the data for each channel if the conditions say so
+            # 'remove' removes any values from the queries (exclude given data)
             # -----------------------------------------------------------------------------------------------
             if 'remove' == uploadCommand:
                 arguments = jsonDat[a][uploadCommandNum]['remove']
                 for c,b in enumerate(arguments):
                     if type(b) == dict:
                         dictHeader = list(b)[0]
-                        #add 'AND' to the begining of the query if modifiers are used
-                        if contentTagQueryApendix == "":
-                                contentTagQueryApendix += ' AND'
-                        if fundingAccountQueryApendix == "":
-                                fundingAccountQueryApendix += ' AND'
-                        if contentTagQueryApendix == "":
-                                contentTagQueryApendix += ' AND'
+                        print(c)
                         #add modifiers to queries
                         if dictHeader == 'content_tags':
-                            if not contentTagQueryApendix == "":
-                                contentTagQueryApendix += ' AND'
-                            contentTagQueryApendix += f" tag NOT '{b[dictHeader]}'"
+                            contentTagQueryApendix += f" AND tag <> '{b[dictHeader]}'"
                         elif dictHeader == 'funding_account':
-                            if not fundingAccountQueryApendix == "":
-                                fundingAccountQueryApendix += ' AND'
-                            fundingAccountQueryApendix += f" account_id NOT '{b[dictHeader]}'"
+                            fundingAccountQueryApendix += f" AND account_id <> '{b[dictHeader]}'"
                         elif dictHeader == 'content_folder':
-                            if not contentTagQueryApendix == "":
-                                contentTagQueryApendix += ' AND'
-                            contentTagQueryApendix += f" folder NOT '{b[dictHeader]}'"
-                #make soemtime soon please an thanks future me
+                            contentTagQueryApendix += f" AND folder <> '{b[dictHeader]}'"
     #run querys
     channelDat = curr.execute(inQuery).fetchall()
     if type(uploadAmmount) == str:
@@ -91,11 +78,10 @@ for a in jsonDat:
     print(channelUploadAmmount)
     returnedUploadAmmount = 0
     for channel in channelDat:
-        contentTags = curr.execute(f"""SELECT tag FROM content_tag WHERE channel_name = '{channel[0]}' AND {contentTagQueryApendix} """).fetchall()
+        contentTags = curr.execute(f"""SELECT tag FROM content_tag WHERE channel_name = '{channel[0]}'{contentTagQueryApendix} """).fetchall()
         contentTags = [a[0] for a in contentTags]
-        fundingAccounts = curr.execute(f"""SELECT account_id FROM funding_account WHERE channel_name = '{channel[0]}' AND {fundingAccountQueryApendix} """).fetchall()
+        fundingAccounts = curr.execute(f"""SELECT account_id FROM funding_account WHERE channel_name = '{channel[0]}'{fundingAccountQueryApendix} """).fetchall()
         fundingAccounts = [a[0] for a in fundingAccounts]
-        contentFolders = curr.execute(f"""SELECT folder FROM content_folder WHERE channel_name = '{channel[0]}' {contentFoldersQueryApendix} """).fetchall()
+        contentFolders = curr.execute(f"""SELECT folder FROM content_folder WHERE channel_name = '{channel[0]}'{contentFoldersQueryApendix} """).fetchall()
         contentFolders = [a[0] for a in contentFolders]
-        
-        #returnedUploadAmmount = main.main(channel, contentTags, fundingAccounts, contentFolders, channelUploadAmmount+returnedUploadAmmount)
+        returnedUploadAmmount = main.main(channel, contentTags, fundingAccounts, contentFolders, channelUploadAmmount+returnedUploadAmmount)

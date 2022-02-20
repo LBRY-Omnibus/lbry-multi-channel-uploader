@@ -5,6 +5,11 @@
             "in":[
                 {"wallet_name":"default_wallet"}
             ]
+        },
+        {
+            "remove":[
+                {"content_tags":"entertainment"}
+            ]
         }
     ]
 }
