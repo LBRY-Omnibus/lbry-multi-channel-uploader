@@ -60,13 +60,14 @@ for a in jsonDat:
                 for c,b in enumerate(arguments):
                     if type(b) == dict:
                         dictHeader = list(b)[0]
+                        #add 'AND' to the begining of the query if modifiers are used
                         if contentTagQueryApendix == "":
                                 contentTagQueryApendix += ' AND'
                         if fundingAccountQueryApendix == "":
                                 fundingAccountQueryApendix += ' AND'
                         if contentTagQueryApendix == "":
                                 contentTagQueryApendix += ' AND'
-
+                        #add modifiers to queries
                         if dictHeader == 'content_tags':
                             if not contentTagQueryApendix == "":
                                 contentTagQueryApendix += ' AND'
