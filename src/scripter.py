@@ -60,6 +60,13 @@ for a in jsonDat:
                 for c,b in enumerate(arguments):
                     if type(b) == dict:
                         dictHeader = list(b)[0]
+                        if contentTagQueryApendix == "":
+                                contentTagQueryApendix += ' AND'
+                        if fundingAccountQueryApendix == "":
+                                fundingAccountQueryApendix += ' AND'
+                        if contentTagQueryApendix == "":
+                                contentTagQueryApendix += ' AND'
+
                         if dictHeader == 'content_tags':
                             if not contentTagQueryApendix == "":
                                 contentTagQueryApendix += ' AND'
@@ -85,9 +92,9 @@ for a in jsonDat:
     for channel in channelDat:
         contentTags = curr.execute(f"""SELECT tag FROM content_tag WHERE channel_name = '{channel[0]}' AND {contentTagQueryApendix} """).fetchall()
         contentTags = [a[0] for a in contentTags]
-        fundingAccounts = curr.execute(f"""SELECT account_id FROM funding_account WHERE channel_name = '{channel[0]}' AND {contentTagQueryApendix} """).fetchall()
+        fundingAccounts = curr.execute(f"""SELECT account_id FROM funding_account WHERE channel_name = '{channel[0]}' AND {fundingAccountQueryApendix} """).fetchall()
         fundingAccounts = [a[0] for a in fundingAccounts]
-        contentFolders = curr.execute(f"""SELECT folder FROM content_folder WHERE channel_name = '{channel[0]}' AND {contentTagQueryApendix} """).fetchall()
+        contentFolders = curr.execute(f"""SELECT folder FROM content_folder WHERE channel_name = '{channel[0]}' {contentFoldersQueryApendix} """).fetchall()
         contentFolders = [a[0] for a in contentFolders]
         
         #returnedUploadAmmount = main.main(channel, contentTags, fundingAccounts, contentFolders, channelUploadAmmount+returnedUploadAmmount)
