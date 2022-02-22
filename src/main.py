@@ -62,13 +62,13 @@ def uploadToLBRY(channelName, channelId, walletName, acountId, uploadFee, conten
         insertNewUpload(walletName, channelName, file, (upload["result"]["outputs"][0]["permanent_url"]))
         return(upload['result']['outputs'][0]['permanent_url'])
 
-def main(channel, contentTags, fundingAccounts, contentFolders, channelUploadAmmount):
+def main(channel, wallet, contentTags, fundingAccounts, contentFolders, channelUploadAmmount):
     global dataBase, curr
     dbCreate.__main()
     dataBase = sqlite3.connect(progPath + '/data/database/db.s3db')
     curr = dataBase.cursor()
     while channelUploadAmmount > 0:
-        addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':channel[2]}}).json()
+        addWallet = requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':wallet}}).json()
         # for removing directories and files in channels in a channels ignore list
         fileList = []
         for d in (0, len(contentFolders)-1):

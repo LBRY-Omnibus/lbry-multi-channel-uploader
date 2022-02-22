@@ -1,10 +1,19 @@
 {
-    "upload":[
-        {"upload_ammount":2},
-        {
-            "in":[
-                {"wallet_name":"default_wallet"}
-            ]
-        }
-    ]
+    "upload":{
+        "upload_ammount":2,
+        "wallet_id": "default_wallet",
+        "channel_id":"",
+        "channel_name":"",
+        "bid":0.01,
+        "folders":[
+            "/test1",
+            "/test2",
+            "/test3"
+        ],
+        "tags":[
+            "entertainment",
+            "vidya"
+        ]
+        
+    }
 }
