@@ -10,11 +10,6 @@ def __main():
 
     curr.execute(f"""CREATE TABLE IF NOT EXISTS uploaded (wallet TEXT, channel_name TEXT, file_path TEXT, file_name TEXT, url TEXT) """)
     curr.execute(f"""CREATE TABLE IF NOT EXISTS ignore (channel_name TEXT, ignore_location TEXT, ignore TEXT, ignore_type TEXT) """)
-    curr.execute(f"""CREATE TABLE IF NOT EXISTS funding_account (channel_name TEXT, account_id TEXT)""")
-    curr.execute(f"""CREATE TABLE IF NOT EXISTS content_tag (channel_name TEXT, tag TEXT)""")
-    curr.execute(f"""CREATE TABLE IF NOT EXISTS content_folder (channel_name TEXT, folder TEXT)""")
-    curr.execute(f"""CREATE TABLE IF NOT EXISTS channels (channel_name TEXT, channel_id TEXT, wallet_name TEXT, account_id TEXT, upload_fee TEXT,
-                    PRIMARY KEY (channel_name, channel_id))""")
 
     dataBase.commit()
     dataBase.close()
