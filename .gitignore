@@ -119,3 +119,5 @@ dmypy.json
 /src/channelList.json
 src/scripts/*.gif
 *.gif
+src/script.json
+*.json

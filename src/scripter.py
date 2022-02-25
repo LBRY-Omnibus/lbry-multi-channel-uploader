@@ -3,99 +3,63 @@ import os
 import sqlite3
 import main
 import math
+import requests
+import dbCreate
 
 progPath = os.path.dirname(os.path.abspath(__file__))
+dbCreate.__main()
 
 dataBase = sqlite3.connect(progPath + '/data/database/db.s3db')
 curr = dataBase.cursor()
 
 with open('./script.json', 'r') as jsonRaw:
     jsonDat =  json.load(jsonRaw)
-for a in jsonDat:
-    if a == 'upload':
-        uploadAmmount = 'all'
-        inQuery = "SELECT * FROM channels"
-        contentTagQueryApendix = ""
-        fundingAccountQueryApendix = ""
-        contentFoldersQueryApendix = ""
-        for uploadCommandNum in range(0, len(jsonDat[a]), 1):
-            uploadCommand = list(jsonDat[a][uploadCommandNum])[0]
+for a in range(0, len(jsonDat['commands']), 1):
+    if list(jsonDat['commands'][a])[0] == 'upload':
+        uploadAmmount = 1
+        channelDat = []
+        channelBid = 0
+        contentFolders = []
+        contentTags = []
+        channelUploadAmmount = 0
+        fundingAccounts = []
+        accountId = ''
+        channelDatValues = {'wallet_id':'default_wallet', 'name':[], 'claim_id':[], "page_size":50, "resolve":False, "no_totals":True}
+        #This whole section needs to be cleaned up and made better in general
+        for uploadCommand in jsonDat['commands'][a]['upload']:
+            uploadCommandDat = jsonDat['commands'][a]['upload'][uploadCommand]
             # -----------------------------------------------------------------------------------------------
             # grabs the max upoload ammount if supplied, 
-            # otherwise it defaults to 'all'
+            # otherwise it defaults to 1
             # -----------------------------------------------------------------------------------------------
             if 'upload_ammount' == uploadCommand:
-                uploadAmmount = jsonDat[a][uploadCommandNum]['upload_ammount']
+                uploadAmmount = uploadCommandDat
             # -----------------------------------------------------------------------------------------------
-            # 'in' grabs channels if they have the given data,
-            # the channels returned are used later for 'where' and uploading when they are eventually looped over
-            # if in is not suplied in the script then it defaults to all channels
+            # add stuff for grabing channels
             # -----------------------------------------------------------------------------------------------
-            if 'in' == uploadCommand:
-                inQuery += ' WHERE'
-                arguments = jsonDat[a][uploadCommandNum]['in']
-                for c,b in enumerate(arguments):
-                    #if the datatype is a dict then treat it as a argument and interprit 
-                    if type(b) == dict:
-                        dictHeader = list(b)[0]
-                        if dictHeader in ['channel_name', 'channel_id', 'wallet_name', 'acount_id', 'upload_fee']:
-                            inQuery += f" {dictHeader} = '{b[dictHeader]}'"
-                        dictDataField = {'content_folder':'folder', 'content_tag': 'channel_name', 'funding_account':'channel_name'}
-                        if dictHeader in list(dictDataField):
-                            inQuery += f" channel_name IN (SELECT channel_name FROM {dictHeader} WHERE {dictDataField[dictHeader]} = '{b[dictHeader]}')"
-                        # if a modfifier (AND, OR, etc) is not given next and not at the end add AND
-                        if c+1 <= len(arguments)-1:
-                            if not type(arguments[c+1]) == str:
-                                inQuery += " AND"
-                    # if the datatype is string and in the list of operators then add the string as and operator
-                    elif type(b) == str and b in ['OR', 'AND', 'OR NOT', 'AND NOT']:
-                        inQuery += f" {b}"
-            print(inQuery)
-            # -----------------------------------------------------------------------------------------------
-            # while 'in' grabs channels if they have the given data,
-            # 'where' uses the data for each channel if the conditions say so
-            # -----------------------------------------------------------------------------------------------
-            if 'remove' == uploadCommand:
-                arguments = jsonDat[a][uploadCommandNum]['remove']
-                for c,b in enumerate(arguments):
-                    if type(b) == dict:
-                        dictHeader = list(b)[0]
-                        #add 'AND' to the begining of the query if modifiers are used
-                        if contentTagQueryApendix == "":
-                                contentTagQueryApendix += ' AND'
-                        if fundingAccountQueryApendix == "":
-                                fundingAccountQueryApendix += ' AND'
-                        if contentTagQueryApendix == "":
-                                contentTagQueryApendix += ' AND'
-                        #add modifiers to queries
-                        if dictHeader == 'content_tags':
-                            if not contentTagQueryApendix == "":
-                                contentTagQueryApendix += ' AND'
-                            contentTagQueryApendix += f" tag NOT '{b[dictHeader]}'"
-                        elif dictHeader == 'funding_account':
-                            if not fundingAccountQueryApendix == "":
-                                fundingAccountQueryApendix += ' AND'
-                            fundingAccountQueryApendix += f" account_id NOT '{b[dictHeader]}'"
-                        elif dictHeader == 'content_folder':
-                            if not contentTagQueryApendix == "":
-                                contentTagQueryApendix += ' AND'
-                            contentTagQueryApendix += f" folder NOT '{b[dictHeader]}'"
-                #make soemtime soon please an thanks future me
-    #run querys
-    channelDat = curr.execute(inQuery).fetchall()
-    if type(uploadAmmount) == str:
-        channelUploadAmmount = uploadAmmount
-    elif type(uploadAmmount) == int:
-        channelUploadAmmount = math.ceil(uploadAmmount/len(channelDat)) if uploadAmmount < len(channelDat) else math.floor(uploadAmmount/len(channelDat))
-        # make channelUploadAmount accurate later
-    print(channelUploadAmmount)
-    returnedUploadAmmount = 0
-    for channel in channelDat:
-        contentTags = curr.execute(f"""SELECT tag FROM content_tag WHERE channel_name = '{channel[0]}' AND {contentTagQueryApendix} """).fetchall()
-        contentTags = [a[0] for a in contentTags]
-        fundingAccounts = curr.execute(f"""SELECT account_id FROM funding_account WHERE channel_name = '{channel[0]}' AND {fundingAccountQueryApendix} """).fetchall()
-        fundingAccounts = [a[0] for a in fundingAccounts]
-        contentFolders = curr.execute(f"""SELECT folder FROM content_folder WHERE channel_name = '{channel[0]}' {contentFoldersQueryApendix} """).fetchall()
-        contentFolders = [a[0] for a in contentFolders]
+            if uploadCommand == 'wallet_id':
+                channelDatValues['wallet_id'] = uploadCommandDat
+            if uploadCommand == 'channel_name':
+                channelDatValues['name'].extend(uploadCommandDat) if type(uploadCommandDat) == list else channelDatValues['name'].append(uploadCommandDat)
+            if uploadCommand == 'channel_id':
+                channelDatValues['claim_id'].extend(uploadCommandDat) if type(uploadCommandDat) == list else channelDatValues['claim_id'].append(uploadCommandDat)
+            if uploadCommand == 'funding_accounts':
+                fundingAccounts.extend(uploadCommandDat) if type(uploadCommandDat) == list else fundingAccounts.append(uploadCommandDat)
+            if uploadCommand == 'folders':
+                contentFolders.extend(uploadCommandDat) if type(uploadCommandDat) == list else contentFolders.append(uploadCommandDat)
+            if uploadCommand == 'account_id':
+                accountId = uploadCommandDat
+            if uploadCommand == 'bid':
+                channelBid += uploadCommandDat
+
+        requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':channelDatValues['wallet_id']}}).json()
+        channelDat = requests.post("http://localhost:5279", json={"method": "channel_list", "params": channelDatValues}).json()['result']['items']
         
-        #returnedUploadAmmount = main.main(channel, contentTags, fundingAccounts, contentFolders, channelUploadAmmount+returnedUploadAmmount)
+        if type(uploadAmmount) == str:
+            channelUploadAmmount = uploadAmmount
+        elif type(uploadAmmount) == int:
+            channelUploadAmmount = math.ceil(uploadAmmount/len(channelDat)) if uploadAmmount < len(channelDat) else math.floor(uploadAmmount/len(channelDat))
+            # make channelUploadAmount accurate later
+        returnedUploadAmmount = 0
+        for channel in channelDat:
+            returnedUploadAmmount = main.main(channel, channelDatValues['wallet_id'], accountId, contentTags, fundingAccounts, contentFolders, channelBid, channelUploadAmmount+returnedUploadAmmount)
