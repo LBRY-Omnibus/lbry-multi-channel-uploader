@@ -1,3 +1,4 @@
+from distutils import filelist
 import requests
 import json
 import os
@@ -72,10 +73,8 @@ def main(channel, wallet, accountId, contentTags, fundingAccounts, contentFolder
         requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':wallet}}).json()
         # for removing directories and files in channels in a channels ignore list
         fileList = []
-        for d in (0, len(contentFolders)-1):
-            print(contentFolders)
-            print(d)
-            for (root,dirs,files) in os.walk(contentFolders[d], topdown=True, followlinks=True):
+        for d in contentFolders:
+            for (root,dirs,files) in os.walk(d, topdown=True, followlinks=True):
                 ignores = curr.execute(f"""SELECT ignore_location, ignore, ignore_type FROM ignore WHERE channel_name = '{channel['name']}' """).fetchall()
                 for e in ignores:
                     if e[0] == root:
@@ -86,10 +85,11 @@ def main(channel, wallet, accountId, contentTags, fundingAccounts, contentFolder
                 #combines root and name together if name does not have !qB in it and adds to list, otherwise add None (e), then removes every none in list (f) 
                 fileList.extend(f for f in [([root.replace('\\', '/'), e]) if '.!qB' not in e else None for e in files] if f)
         #removes duplicates from uploaded table
+        print(fileList)
         curr.execute(f"""CREATE TEMP TABLE a(file_name TEXT, file_path TEXT)""")
         for a in fileList:
             curr.execute(f"""INSERT INTO a(file_path, file_name) VALUES("{a[0]}", "{a[1]}")""")
-        curr.execute(f"""DELETE FROM a WHERE file_path+file_name in (SELECT file_path+file_name FROM uploaded WHERE channel_name = '{channel['name']}')""")
+        curr.execute(f"""DELETE FROM a WHERE file_path in (SELECT file_path FROM uploaded WHERE channel_name = '{channel['name']}') AND file_name in (SELECT file_name FROM uploaded WHERE channel_name = '{channel['name']}')""")
         notUploaded = curr.execute(f"""SELECT file_path, file_name FROM a""").fetchall()
         curr.execute(f"""DROP TABLE a""")
         if len(notUploaded) > 0:
