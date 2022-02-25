@@ -14,7 +14,7 @@ curr = dataBase.cursor()
 
 with open('./script.json', 'r') as jsonRaw:
     jsonDat =  json.load(jsonRaw)
-for a in jsonDat:
+for a in jsonDat['commands']:
     if a == 'upload':
         uploadAmmount = 'all'
         channelDat = []
@@ -23,16 +23,17 @@ for a in jsonDat:
         contentTags = []
         channelUploadAmmount = 0
         fundingAccounts = []
+        accountId = ''
         channelDatValues = {'wallet_id':'default_wallet', 'name':[], 'claim_id':[], "page_size":50, "resolve":False, "no_totals":True}
         #This whole section needs to be cleaned up and made better in general
-        for uploadCommand in jsonDat[a]:
-            uploadCommandDat = jsonDat[a][uploadCommand]
+        for uploadCommand in jsonDat['commands'][list(a)[0]]:
+            uploadCommandDat = jsonDat['commands'][list(a)[0]][uploadCommand]
             # -----------------------------------------------------------------------------------------------
             # grabs the max upoload ammount if supplied, 
             # otherwise it defaults to 'all'
             # -----------------------------------------------------------------------------------------------
             if 'upload_ammount' == uploadCommand:
-                uploadAmmount = jsonDat[a][uploadCommand]
+                uploadAmmount = juploadCommandDat
             # -----------------------------------------------------------------------------------------------
             # add stuff for grabing channels
             # -----------------------------------------------------------------------------------------------
@@ -46,16 +47,20 @@ for a in jsonDat:
                 fundingAccounts.extend(uploadCommandDat) if type(uploadCommandDat) == list else fundingAccounts.append(uploadCommandDat)
             if uploadCommand == 'folders':
                 contentFolders.extend(uploadCommandDat) if type(uploadCommandDat) == list else contentFolders.append(uploadCommandDat)
+            if uploadCommand == 'account_id':
+                accountId = uploadCommandDat
+            if uploadCommand == 'bid':
+                channelBid += uploadCommandDat
 
-    requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':channelDatValues['wallet_id']}}).json()
-    channelDat = requests.post("http://localhost:5279", json={"method": "channel_list", "params": channelDatValues}).json()['result']['items']
-    
-    if type(uploadAmmount) == str:
-        channelUploadAmmount = uploadAmmount
-    elif type(uploadAmmount) == int:
-        channelUploadAmmount = math.ceil(uploadAmmount/len(channelDat)) if uploadAmmount < len(channelDat) else math.floor(uploadAmmount/len(channelDat))
-        # make channelUploadAmount accurate later
-    returnedUploadAmmount = 0
+        requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':channelDatValues['wallet_id']}}).json()
+        channelDat = requests.post("http://localhost:5279", json={"method": "channel_list", "params": channelDatValues}).json()['result']['items']
+        
+        if type(uploadAmmount) == str:
+            channelUploadAmmount = uploadAmmount
+        elif type(uploadAmmount) == int:
+            channelUploadAmmount = math.ceil(uploadAmmount/len(channelDat)) if uploadAmmount < len(channelDat) else math.floor(uploadAmmount/len(channelDat))
+            # make channelUploadAmount accurate later
+        returnedUploadAmmount = 0
 
-    for channel in channelDat:
-        returnedUploadAmmount = main.main(channel, channelDatValues['wallet_id'], contentTags, fundingAccounts, contentFolders, channelUploadAmmount+returnedUploadAmmount)
+        #for channel in channelDat:
+        #    returnedUploadAmmount = main.main(channel, channelDatValues['wallet_id'], accountId, contentTags, fundingAccounts, contentFolders, channelBid, channelUploadAmmount+returnedUploadAmmount)

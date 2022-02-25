@@ -41,7 +41,7 @@ def insertNewUpload(wallet, channel, file, url) -> None:
     return()
 
 #uploads video to lbry
-def uploadToLBRY(channelName, channelId, walletName, accountId, uploadFee, contentTags, fundingAccounts, file) -> str:
+def uploadToLBRY(channelName, channelId, walletName, accountId, channelBid, contentTags, fundingAccounts, file) -> str:
     thumbnailScript = 'gifFirst3Sec'
     thumbnailUploadScript = 'lbry'
     thumbnailImport = importlib.import_module(f'scripts.thumbnail.{thumbnailScript}.{thumbnailScript}')
@@ -51,19 +51,19 @@ def uploadToLBRY(channelName, channelId, walletName, accountId, uploadFee, conte
     nameTable = name.maketrans("", "", " !@#$%^&*()_-+=[]:,<.>/?;:'\|")
     name = name.translate(nameTable)
     upload = requests.post("http://localhost:5279", json={"method": "publish", "params": {
-                            "name": name, "bid": uploadFee, "file_path": os.path.join(file[0], file[1]), "title": os.path.splitext(os.path.basename(file[1]))[0], 
+                            "name": name, "bid": str(channelBid), "file_path": os.path.join(file[0], file[1]), "title": os.path.splitext(os.path.basename(file[1]))[0], 
                             "tags": contentTags, "thumbnail_url": thumbnail, "channel_id": channelId, "account_id": accountId, "wallet_id": walletName, 
                             "funding_account_ids": fundingAccounts}}).json()
     print(upload)
     if 'error' in upload.keys():
         checkBal(walletName)
-        afterError = uploadToLBRY(channelName, channelId, walletName, accountId, uploadFee, contentTags, fundingAccounts, file)
+        afterError = uploadToLBRY(channelName, channelId, walletName, accountId, channelBid, contentTags, fundingAccounts, file)
         return(afterError)
     else:
         insertNewUpload(walletName, channelName, file, (upload["result"]["outputs"][0]["permanent_url"]))
         return(upload['result']['outputs'][0]['permanent_url'])
 
-def main(channel, wallet, contentTags, fundingAccounts, contentFolders, channelUploadAmmount):
+def main(channel, wallet, accountId, contentTags, fundingAccounts, contentFolders, channelBid, channelUploadAmmount):
     global dataBase, curr
     dbCreate.__main()
     dataBase = sqlite3.connect(progPath + '/data/database/db.s3db')
@@ -93,7 +93,7 @@ def main(channel, wallet, contentTags, fundingAccounts, contentFolders, channelU
         notUploaded = curr.execute(f"""SELECT file_path, file_name FROM a""").fetchall()
         curr.execute(f"""DROP TABLE a""")
         if len(notUploaded) > 0:
-            uploadToLBRY(channelName = channel['name'], channelId = channel['claim_id'], walletName = wallet, accountId = channel['address'], uploadFee = channelUploadAmmount,
+            uploadToLBRY(channelName = channel['name'], channelId = channel['claim_id'], walletName = wallet, accountId = accountId, channelBid = channelBid,
                         contentTags = contentTags, fundingAccounts = fundingAccounts, file = notUploaded[0])
             channelUploadAmmount -= 1
         else:
