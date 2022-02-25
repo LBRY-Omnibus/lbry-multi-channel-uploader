@@ -14,9 +14,9 @@ curr = dataBase.cursor()
 
 with open('./script.json', 'r') as jsonRaw:
     jsonDat =  json.load(jsonRaw)
-for a in jsonDat['commands']:
-    if a == 'upload':
-        uploadAmmount = 'all'
+for a in range(0, len(jsonDat['commands']), 1):
+    if list(jsonDat['commands'][a])[0] == 'upload':
+        uploadAmmount = 1
         channelDat = []
         channelBid = 0
         contentFolders = []
@@ -26,14 +26,14 @@ for a in jsonDat['commands']:
         accountId = ''
         channelDatValues = {'wallet_id':'default_wallet', 'name':[], 'claim_id':[], "page_size":50, "resolve":False, "no_totals":True}
         #This whole section needs to be cleaned up and made better in general
-        for uploadCommand in jsonDat['commands'][list(a)[0]]:
-            uploadCommandDat = jsonDat['commands'][list(a)[0]][uploadCommand]
+        for uploadCommand in jsonDat['commands'][a]['upload']:
+            uploadCommandDat = jsonDat['commands'][a]['upload'][uploadCommand]
             # -----------------------------------------------------------------------------------------------
             # grabs the max upoload ammount if supplied, 
-            # otherwise it defaults to 'all'
+            # otherwise it defaults to 1
             # -----------------------------------------------------------------------------------------------
             if 'upload_ammount' == uploadCommand:
-                uploadAmmount = juploadCommandDat
+                uploadAmmount = uploadCommandDat
             # -----------------------------------------------------------------------------------------------
             # add stuff for grabing channels
             # -----------------------------------------------------------------------------------------------
@@ -61,6 +61,5 @@ for a in jsonDat['commands']:
             channelUploadAmmount = math.ceil(uploadAmmount/len(channelDat)) if uploadAmmount < len(channelDat) else math.floor(uploadAmmount/len(channelDat))
             # make channelUploadAmount accurate later
         returnedUploadAmmount = 0
-
-        #for channel in channelDat:
-        #    returnedUploadAmmount = main.main(channel, channelDatValues['wallet_id'], accountId, contentTags, fundingAccounts, contentFolders, channelBid, channelUploadAmmount+returnedUploadAmmount)
+        for channel in channelDat:
+            returnedUploadAmmount = main.main(channel, channelDatValues['wallet_id'], accountId, contentTags, fundingAccounts, contentFolders, channelBid, channelUploadAmmount+returnedUploadAmmount)
