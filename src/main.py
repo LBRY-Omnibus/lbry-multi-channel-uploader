@@ -85,7 +85,6 @@ def main(channel, wallet, accountId, contentTags, fundingAccounts, contentFolder
                 #combines root and name together if name does not have !qB in it and adds to list, otherwise add None (e), then removes every none in list (f) 
                 fileList.extend(f for f in [([root.replace('\\', '/'), e]) if '.!qB' not in e else None for e in files] if f)
         #removes duplicates from uploaded table
-        print(fileList)
         curr.execute(f"""CREATE TEMP TABLE a(file_name TEXT, file_path TEXT)""")
         for a in fileList:
             curr.execute(f"""INSERT INTO a(file_path, file_name) VALUES("{a[0]}", "{a[1]}")""")
