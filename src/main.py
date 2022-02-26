@@ -1,4 +1,3 @@
-from distutils import filelist
 import requests
 import json
 import os
