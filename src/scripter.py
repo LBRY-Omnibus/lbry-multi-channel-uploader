@@ -1,6 +1,5 @@
 import json 
 import os
-import sqlite3
 import main as lbryMain
 import math
 import requests
@@ -9,7 +8,7 @@ import dbCreate
 progPath = os.path.dirname(os.path.abspath(__file__))
 
 #for the upload command
-def upload(jsonDat, a):
+def upload(a):
     def upload_ammount() -> None:
         nonlocal uploadAmmount
         uploadAmmount = uploadCommandDat
@@ -64,8 +63,8 @@ def upload(jsonDat, a):
     fundingAccounts = []
     accountId = ''
     channelDatValues = {'wallet_id':'default_wallet', 'name':[], 'claim_id':[], "page_size":50, "resolve":False, "no_totals":True}
-    for uploadCommand in jsonDat['commands'][a]['upload']:
-        uploadCommandDat = jsonDat['commands'][a]['upload'][uploadCommand]
+    for uploadCommand in a['upload']:
+        uploadCommandDat = a['upload'][uploadCommand]
         #find better way to implement this other then eval
         eval(f"""{uploadCommand}()""")
         requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':channelDatValues['wallet_id']}}).json()
@@ -86,9 +85,9 @@ def main():
         with con as curr:
             with open('./script.json', 'r') as jsonRaw:
                 jsonDat =  json.load(jsonRaw)
-            for a in range(0, len(jsonDat['commands']), 1):
+            for a in jsonDat['commands']:
                 # find alt. to eval that doesn't rape speed
-                eval(f"""{list(jsonDat['commands'][a])[0]}({jsonDat}, {a})""")
+                eval(f"""{list(a)[0]}({a})""")
 
 if __name__ == '__main__':
     main()

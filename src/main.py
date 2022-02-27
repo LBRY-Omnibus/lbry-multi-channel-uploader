@@ -7,7 +7,6 @@ import time
 import hashlib
 import gc
 import importlib
-import dbCreate
 
 progPath = os.path.dirname(os.path.abspath(__file__))
 
@@ -72,7 +71,7 @@ def uploadToLBRY(channelName, channelId, walletName, accountId, channelBid, cont
 
 def main(channel, wallet, accountId, contentTags, fundingAccounts, contentFolders, channelBid, channelUploadAmmount):
     global dataBase, curr, con
-    dbCreate.__main()
+    #dbCreate.__main()
     with db('default') as con:
         with con as curr:
             while channelUploadAmmount > 0:
