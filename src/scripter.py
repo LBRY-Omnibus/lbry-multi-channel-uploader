@@ -82,13 +82,13 @@ def upload(jsonDat, a):
 
 def main():
     dbCreate.__main()
-    dataBase = sqlite3.connect(progPath + '/data/database/db.s3db')
-    curr = dataBase.cursor()
-    with open('./script.json', 'r') as jsonRaw:
-        jsonDat =  json.load(jsonRaw)
-    for a in range(0, len(jsonDat['commands']), 1):
-        if list(jsonDat['commands'][a])[0] == 'upload':
-            upload(jsonDat, a)
+    with lbryMain.db('default') as con:
+        with con as curr:
+            with open('./script.json', 'r') as jsonRaw:
+                jsonDat =  json.load(jsonRaw)
+            for a in range(0, len(jsonDat['commands']), 1):
+                # find alt. to eval that doesn't rape speed
+                eval(f"""{list(jsonDat['commands'][a])[0]}({jsonDat}, {a})""")
 
 if __name__ == '__main__':
     main()
