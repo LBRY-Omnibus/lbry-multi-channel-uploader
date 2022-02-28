@@ -82,11 +82,11 @@ def upload(a):
             returnedUploadAmmount = lbryMain.main(channel, channelDatValues['wallet_id'], accountId, contentTags, fundingAccounts, contentFolders, channelBid, channelUploadAmmount+returnedUploadAmmount)
 
 
-def main():
+def main(script):
     dbCreate.__main()
     with lbryMain.db('default') as con:
         with con as curr:
-            with open('./script.json', 'r') as jsonRaw:
+            with open(script, 'r') as jsonRaw:
                 jsonDat =  json.load(jsonRaw)
             if 'command' in [jsonDat]:
                 for a in jsonDat['commands']:
@@ -98,4 +98,4 @@ def main():
                         print("Command does not exist")
 
 if __name__ == '__main__':
-    main()
+    main('./script.json')

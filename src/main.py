@@ -82,6 +82,7 @@ def main(channel, wallet, accountId, contentTags, fundingAccounts, contentFolder
                 for d in contentFolders:
                     for (root,dirs,files) in os.walk(d, topdown=True, followlinks=True):
                         ignores = curr.execute(f"""SELECT ignore_location, ignore, ignore_type FROM ignore WHERE channel_name = '{channel['name']}' """).fetchall()
+                        # --IGNORES SHOULD APPLY TO DIFFERENT LEVELS--
                         for e in ignores:
                             if e[0] == root:
                                 if e[2] == 'dir':
@@ -104,6 +105,5 @@ def main(channel, wallet, accountId, contentTags, fundingAccounts, contentFolder
                     channelUploadAmmount -= 1
                 else:
                     return(channelUploadAmmount)
-
-    gc.collect()
-    return(0)
+        gc.collect()
+        return(0)
