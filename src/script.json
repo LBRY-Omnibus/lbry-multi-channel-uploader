@@ -1,17 +1,6 @@
 {
-    "upload":{
-        "upload_ammount":2,
-        "wallet_id": "default_wallet",
-        "channel_name":"@vidya",
-        "funding_accounts":[],
-        "bid":0.01,
-        "folders":[
-            "A:/Desktop/vidya"
-        ],
-        "tags":[
-            "entertainment",
-            "vidya"
-        ]
+    "commands":[
+        {"test":{}}
+    ]
         
-    }
 }

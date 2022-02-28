@@ -66,7 +66,10 @@ def upload(a):
     for uploadCommand in a['upload']:
         uploadCommandDat = a['upload'][uploadCommand]
         #find better way to implement this other then eval
-        eval(f"""{uploadCommand}()""")
+        try:
+            eval(f"""{uploadCommand}()""")
+        except NameError:
+            print('command attribute does not exist')
         requests.post("http://localhost:5279", json={"method": "wallet_add", "params": {'wallet_id':channelDatValues['wallet_id']}}).json()
         channelDat = requests.post("http://localhost:5279", json={"method": "channel_list", "params": channelDatValues}).json()['result']['items']
         if type(uploadAmmount) == str:
@@ -85,9 +88,14 @@ def main():
         with con as curr:
             with open('./script.json', 'r') as jsonRaw:
                 jsonDat =  json.load(jsonRaw)
-            for a in jsonDat['commands']:
-                # find alt. to eval that doesn't rape speed
-                eval(f"""{list(a)[0]}({a})""")
+            if 'command' in [jsonDat]:
+                for a in jsonDat['commands']:
+                    # find alt. to eval that doesn't rape speed
+                    try:
+                        eval(f"""{list(a)[0]}({a})""")
+                    except NameError:
+                        #should run some more error handling stuff later
+                        print("Command does not exist")
 
 if __name__ == '__main__':
     main()
