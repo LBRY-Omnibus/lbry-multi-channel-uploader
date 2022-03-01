@@ -1,11 +1,13 @@
 import json 
 import os
+from venv import create
 import main as lbryMain
 import math
 import requests
 import dbCreate
 
 progPath = os.path.dirname(os.path.abspath(__file__))
+commandDict = {}
 
 #for the upload command
 def upload(a):
@@ -84,18 +86,19 @@ def upload(a):
 
 def main(script):
     dbCreate.__main()
+    commandDict['upload'] = upload
     with lbryMain.db('default') as con:
         with con as curr:
             with open(script, 'r') as jsonRaw:
                 jsonDat =  json.load(jsonRaw)
-            if 'command' in [jsonDat]:
+            if 'commands' in jsonDat.keys():
                 for a in jsonDat['commands']:
-                    # find alt. to eval that doesn't rape speed
                     try:
-                        eval(f"""{list(a)[0]}({a})""")
+                        #runs command
+                        commandDict[list(a)[0]](a)
                     except NameError:
                         #should run some more error handling stuff later
                         print("Command does not exist")
 
 if __name__ == '__main__':
-    main('./script.json')
+    main('A:/Desktop/script.json')
