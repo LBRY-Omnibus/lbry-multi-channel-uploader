@@ -118,7 +118,7 @@ def main(jsonDat):
         with con as curr:
             if 'commands' in jsonDat.keys():
                 for a in jsonDat['commands']:
-                    try:
+                    try: 
                         #runs command
                         commandDict[list(a)[0]](a)
                     except NameError:

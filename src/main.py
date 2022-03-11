@@ -46,29 +46,6 @@ def insertNewUpload(wallet, channel, file, url) -> None:
     con.commit()
     return()
 
-#uploads video to lbry
-def uploadToLBRY(channelName, channelId, walletName, accountId, channelBid, contentTags, fundingAccounts, file) -> str:
-    thumbnailScript = 'gifFirst3Sec'
-    thumbnailUploadScript = 'lbry'
-    thumbnailImport = importlib.import_module(f'scripts.thumbnail.{thumbnailScript}.{thumbnailScript}')
-    thumbnailUploadImport = importlib.import_module(f'scripts.thumbnailUpload.{thumbnailUploadScript}.{thumbnailUploadScript}')
-    thumbnail = thumbnailUploadImport.main(thumbnailImport.main(os.path.join(file[0], file[1])))
-    name = str(hashlib.sha256(file[0].encode('utf-8').strip()).hexdigest())[:5] + str(os.path.splitext(os.path.basename(file[1]))[0])
-    nameTable = name.maketrans("", "", " !@#$%^&*()_-+=[]:,<.>/?;:'\|")
-    name = name.translate(nameTable)
-    upload = requests.post("http://localhost:5279", json={"method": "publish", "params": {
-                            "name": name, "bid": str(channelBid), "file_path": os.path.join(file[0], file[1]), "title": os.path.splitext(os.path.basename(file[1]))[0], 
-                            "tags": contentTags, "thumbnail_url": thumbnail, "channel_id": channelId, "account_id": accountId, "wallet_id": walletName, 
-                            "funding_account_ids": fundingAccounts}}).json()
-    print(upload)
-    if 'error' in upload.keys():
-        checkBal(walletName)
-        afterError = uploadToLBRY(channelName, channelId, walletName, accountId, channelBid, contentTags, fundingAccounts, file)
-        return(afterError)
-    else:
-        insertNewUpload(walletName, channelName, file, (upload["result"]["outputs"][0]["permanent_url"]))
-        return(upload['result']['outputs'][0]['permanent_url'])
-
 def main(channel, wallet, accountId, contentTags, fundingAccounts, contentFolders, channelBid, channelUploadAmmount):
     global dataBase, curr, con
     #dbCreate.__main()
@@ -100,8 +77,29 @@ def main(channel, wallet, accountId, contentTags, fundingAccounts, contentFolder
                 notUploaded = curr.execute(f"""SELECT file_path, file_name FROM a""").fetchall()
                 curr.execute(f"""DROP TABLE a""")
                 if len(notUploaded):
-                    uploadToLBRY(channelName = channel['name'], channelId = channel['claim_id'], walletName = wallet, accountId = accountId, channelBid = channelBid,
-                                contentTags = contentTags, fundingAccounts = fundingAccounts, file = notUploaded[0])
+                    uploaded = False
+                    while uploaded == False:
+                        file = notUploaded[0]
+                        # uploads stuff to LBRY, used to be the uploadToLbry function
+                        thumbnailScript = 'gifFirst3Sec'
+                        thumbnailUploadScript = 'lbry'
+                        thumbnailImport = importlib.import_module(f'scripts.thumbnail.{thumbnailScript}.{thumbnailScript}')
+                        thumbnailUploadImport = importlib.import_module(f'scripts.thumbnailUpload.{thumbnailUploadScript}.{thumbnailUploadScript}')
+                        thumbnail = thumbnailUploadImport.main(thumbnailImport.main(os.path.join(file[0], file[1])))
+                        name = str(hashlib.sha256(file[0].encode('utf-8').strip()).hexdigest())[:5] + str(os.path.splitext(os.path.basename(file[1]))[0])
+                        nameTable = name.maketrans("", "", " !@#$%^&*()_-+=[]:,<.>/?;:'\|")
+                        name = name.translate(nameTable)
+                        upload = requests.post("http://localhost:5279", json={"method": "publish", "params": {
+                                                "name": name, "bid": str(channelBid), "file_path": os.path.join(file[0], file[1]), "title": os.path.splitext(os.path.basename(file[1]))[0], 
+                                                "tags": contentTags, "thumbnail_url": thumbnail, "channel_id": channel['claim_id'], "account_id": accountId, "wallet_id": wallet, 
+                                                "funding_account_ids": fundingAccounts}}).json()
+                        print(upload)
+                        if 'error' in upload.keys():
+                            checkBal(wallet)
+                            uploaded = False
+                        else:
+                            insertNewUpload(wallet, channel['name'], file, (upload["result"]["outputs"][0]["permanent_url"]))
+                            uploaded = True         
                     channelUploadAmmount -= 1
                 else:
                     return(channelUploadAmmount)
